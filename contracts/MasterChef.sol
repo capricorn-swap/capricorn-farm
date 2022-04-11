@@ -126,16 +126,20 @@ contract MasterChef is Ownable {
 		DEV_SHARE = _devShare;
 	}
 
-	function updatePoolShare(uint _poolShare) public onlyOwner{
+	function updatePoolShare(uint _poolShare, bool _withUpdate) public onlyOwner{
 		require(_poolShare <= MAX_SHARE,'too large share');
-		massUpdatePools();
+        if (_withUpdate) {
+            massUpdatePools();
+        }
 		POOL_SHARE = _poolShare;
 		updateStakingPool();
 	}
 
-	function updateFarmBurnShare(uint _farmBurnShare) public onlyOwner{
+	function updateFarmBurnShare(uint _farmBurnShare, bool _withUpdate) public onlyOwner{
 		require(_farmBurnShare <= MAX_SHARE,'too large share');
-		massUpdatePools();
+        if (_withUpdate) {
+            massUpdatePools();
+        }
 		FARM_BURN_SHARE = _farmBurnShare;
 		updateStakingPool();
 	}
