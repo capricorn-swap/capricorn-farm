@@ -255,7 +255,7 @@ contract MasterChef is Ownable {
 		PoolInfo storage pool = poolInfo[_pid];
 		uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**2).div(100);
 		uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
-		uint256 cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
+		cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
 	}
 
     // Update reward variables for all pools. Be careful of gas spending!
