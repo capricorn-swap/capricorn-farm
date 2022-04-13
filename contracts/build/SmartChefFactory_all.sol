@@ -970,6 +970,18 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         emit NewPoolLimit(poolLimitPerUser);
     }
 
+	function updateRewardBalance() internal {
+		uint256 totalReward = rewardPerBlock.mul(bonusEndBlock.sub(startBlock));
+		uint256 rewardBalance = ICRC20(rewardToken).balanceOf(address(this));
+		if(rewardBalance < totalReward){
+			// make sure smartChef has enough reward, must approve first
+			ICRC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
+		}
+		if(rewardBalance > totalReward){
+			ICRC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
+		}
+	}
+
     /*
      * @notice Update reward per block
      * @dev Only callable by owner.
@@ -978,6 +990,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
         require(block.number < startBlock, "Pool has started");
         rewardPerBlock = _rewardPerBlock;
+		updateRewardBalance();
         emit NewRewardPerBlock(_rewardPerBlock);
     }
 
@@ -997,6 +1010,8 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
 
         // Set the lastRewardBlock as the startBlock
         lastRewardBlock = startBlock;
+
+		updateRewardBalance();
 
         emit NewStartAndEndBlocks(_startBlock, _bonusEndBlock);
     }
@@ -1065,6 +1080,7 @@ pragma solidity 0.6.2;
 
 
 contract SmartChefFactory is Ownable {
+	using SafeMath for uint;
     event NewSmartChefContract(address indexed smartChef);
 
 	address [] public pools;
@@ -1101,6 +1117,10 @@ contract SmartChefFactory is Ownable {
         require(_rewardToken.totalSupply() >= 0);
         require(_stakedToken != _rewardToken, "Tokens must be be different");
 
+
+        require(_startBlock < _bonusEndBlock, "New startBlock must be lower than new endBlock");
+        require(block.number < _startBlock, "New startBlock must be higher than current block");
+
         bytes memory bytecode = type(SmartChefInitializable).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(_stakedToken, _rewardToken, _startBlock));
         address smartChefAddress;
@@ -1120,6 +1140,9 @@ contract SmartChefFactory is Ownable {
         );
 
 		pools.push(smartChefAddress);
+
+		// transfer rewardToken to smartChef, must approve first
+		ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
 
         emit NewSmartChefContract(smartChefAddress);
     }

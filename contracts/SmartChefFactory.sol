@@ -7,6 +7,7 @@ import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
 import "./SmartChefInitializable.sol";
 
 contract SmartChefFactory is Ownable {
+	using SafeMath for uint;
     event NewSmartChefContract(address indexed smartChef);
 
 	address [] public pools;
@@ -43,6 +44,10 @@ contract SmartChefFactory is Ownable {
         require(_rewardToken.totalSupply() >= 0);
         require(_stakedToken != _rewardToken, "Tokens must be be different");
 
+
+        require(_startBlock < _bonusEndBlock, "New startBlock must be lower than new endBlock");
+        require(block.number < _startBlock, "New startBlock must be higher than current block");
+
         bytes memory bytecode = type(SmartChefInitializable).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(_stakedToken, _rewardToken, _startBlock));
         address smartChefAddress;
@@ -62,6 +67,9 @@ contract SmartChefFactory is Ownable {
         );
 
 		pools.push(smartChefAddress);
+
+		// transfer rewardToken to smartChef, must approve first
+		ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
 
         emit NewSmartChefContract(smartChefAddress);
     }

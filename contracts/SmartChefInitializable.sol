@@ -239,6 +239,18 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         emit NewPoolLimit(poolLimitPerUser);
     }
 
+	function updateRewardBalance() internal {
+		uint256 totalReward = rewardPerBlock.mul(bonusEndBlock.sub(startBlock));
+		uint256 rewardBalance = ICRC20(rewardToken).balanceOf(address(this));
+		if(rewardBalance < totalReward){
+			// make sure smartChef has enough reward, must approve first
+			ICRC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
+		}
+		if(rewardBalance > totalReward){
+			ICRC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
+		}
+	}
+
     /*
      * @notice Update reward per block
      * @dev Only callable by owner.
@@ -247,6 +259,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
         require(block.number < startBlock, "Pool has started");
         rewardPerBlock = _rewardPerBlock;
+		updateRewardBalance();
         emit NewRewardPerBlock(_rewardPerBlock);
     }
 
@@ -266,6 +279,8 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
 
         // Set the lastRewardBlock as the startBlock
         lastRewardBlock = startBlock;
+
+		updateRewardBalance();
 
         emit NewStartAndEndBlocks(_startBlock, _bonusEndBlock);
     }
