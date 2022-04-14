@@ -7,18 +7,18 @@ import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
 import "./SmartChefInitializable.sol";
 
 contract SmartChefFactory is Ownable {
-	using SafeMath for uint;
+    using SafeMath for uint;
     event NewSmartChefContract(address indexed smartChef);
 
-	address [] public pools;
+    address [] public pools;
 
     constructor() public {
         //
     }
 
-	function poolsLength() public view returns(uint length){
-		return pools.length;
-	}
+    function poolsLength() public view returns(uint length){
+        return pools.length;
+    }
 
     /*
      * @notice Deploy the pool
@@ -66,10 +66,10 @@ contract SmartChefFactory is Ownable {
             _admin
         );
 
-		pools.push(smartChefAddress);
+        pools.push(smartChefAddress);
 
-		// transfer rewardToken to smartChef, must approve first
-		ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
+        // transfer rewardToken to smartChef, must approve first
+        ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
 
         emit NewSmartChefContract(smartChefAddress);
     }

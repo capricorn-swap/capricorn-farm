@@ -848,6 +848,16 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         transferOwnership(_admin);
     }
 
+    function poolInfo() external view returns(address _stakedToken,address _rewardToken,
+        uint256 _rewardPerBlock,uint256 _startBlock,uint256 _bonusEndBlock,uint256 _poolLimitPerUser){
+        _stakedToken = address(stakedToken);
+        _rewardToken = address(rewardToken);
+        _rewardPerBlock = rewardPerBlock;
+        _startBlock = startBlock;
+        _bonusEndBlock = bonusEndBlock;
+        _poolLimitPerUser = poolLimitPerUser;
+    }
+
     /*
      * @notice Deposit staked tokens and collect reward tokens (if any)
      * @param _amount: amount to withdraw (in rewardToken)
@@ -970,17 +980,17 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         emit NewPoolLimit(poolLimitPerUser);
     }
 
-	function updateRewardBalance() internal {
-		uint256 totalReward = rewardPerBlock.mul(bonusEndBlock.sub(startBlock));
-		uint256 rewardBalance = ICRC20(rewardToken).balanceOf(address(this));
-		if(rewardBalance < totalReward){
-			// make sure smartChef has enough reward, must approve first
-			ICRC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
-		}
-		if(rewardBalance > totalReward){
-			ICRC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
-		}
-	}
+    function updateRewardBalance() internal {
+        uint256 totalReward = rewardPerBlock.mul(bonusEndBlock.sub(startBlock));
+        uint256 rewardBalance = ICRC20(rewardToken).balanceOf(address(this));
+        if(rewardBalance < totalReward){
+            // make sure smartChef has enough reward, must approve first
+            ICRC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
+        }
+        if(rewardBalance > totalReward){
+            ICRC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
+        }
+    }
 
     /*
      * @notice Update reward per block
@@ -990,7 +1000,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
         require(block.number < startBlock, "Pool has started");
         rewardPerBlock = _rewardPerBlock;
-		updateRewardBalance();
+        updateRewardBalance();
         emit NewRewardPerBlock(_rewardPerBlock);
     }
 
@@ -1011,7 +1021,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         // Set the lastRewardBlock as the startBlock
         lastRewardBlock = startBlock;
 
-		updateRewardBalance();
+        updateRewardBalance();
 
         emit NewStartAndEndBlocks(_startBlock, _bonusEndBlock);
     }
@@ -1080,18 +1090,18 @@ pragma solidity 0.6.2;
 
 
 contract SmartChefFactory is Ownable {
-	using SafeMath for uint;
+    using SafeMath for uint;
     event NewSmartChefContract(address indexed smartChef);
 
-	address [] public pools;
+    address [] public pools;
 
     constructor() public {
         //
     }
 
-	function poolsLength() public view returns(uint length){
-		return pools.length;
-	}
+    function poolsLength() public view returns(uint length){
+        return pools.length;
+    }
 
     /*
      * @notice Deploy the pool
@@ -1139,10 +1149,10 @@ contract SmartChefFactory is Ownable {
             _admin
         );
 
-		pools.push(smartChefAddress);
+        pools.push(smartChefAddress);
 
-		// transfer rewardToken to smartChef, must approve first
-		ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
+        // transfer rewardToken to smartChef, must approve first
+        ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
 
         emit NewSmartChefContract(smartChefAddress);
     }

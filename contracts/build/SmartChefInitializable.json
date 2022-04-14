@@ -358,6 +358,44 @@
 	},
 	{
 		"inputs": [],
+		"name": "poolInfo",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "_stakedToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_rewardToken",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_rewardPerBlock",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_startBlock",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_bonusEndBlock",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_poolLimitPerUser",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "poolLimitPerUser",
 		"outputs": [
 			{
