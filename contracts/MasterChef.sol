@@ -55,7 +55,7 @@ contract MasterChef is Ownable {
     // CPCT tokens created per block.
     uint256 public cpctPerBlock;
     // Bonus muliplier(percent) for early cpct makers.
-    uint256 public BONUS_MULTIPLIER = 100;
+    uint256 public BONUS_MULTIPLIER = 10000;
     // Max bps
     uint256 public MAX_SHARE = 10000;
     // Burn share bps 
@@ -253,7 +253,7 @@ contract MasterChef is Ownable {
 
     function poolRewardPerBlock(uint256 _pid) external view returns (uint256 cpctReward){
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**2).div(100);
+        uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
         uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
         cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
     }
