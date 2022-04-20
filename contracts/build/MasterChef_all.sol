@@ -1269,7 +1269,7 @@ contract MasterChef is Ownable {
             return;
         }
         uint256 multiplier = getMultiplier(lastMinedBlock, block.number);
-        uint256 cpctReward = multiplier.mul(cpctPerBlock);
+        uint256 cpctReward = multiplier.mul(cpctPerBlock).div(MAX_SHARE);
 
         uint256 burnAmount = cpctReward.mul(BURN_SHARE).div(MAX_SHARE);
         uint256 devReward = cpctReward.sub(burnAmount).mul(DEV_SHARE).div(MAX_SHARE);
@@ -1348,7 +1348,7 @@ contract MasterChef is Ownable {
 
     // Return reward multiplier over the given _from to _to block.
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
-        return _to.sub(_from).mul(BONUS_MULTIPLIER).div(MAX_SHARE);
+        return _to.sub(_from).mul(BONUS_MULTIPLIER);
     }
 
     // View function to see pending CPCTs on frontend.
@@ -1359,7 +1359,7 @@ contract MasterChef is Ownable {
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**2);
+            uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
             uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
             uint256 cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
             accCapricornPerShare = accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
@@ -1396,7 +1396,7 @@ contract MasterChef is Ownable {
         }
         blockMint();
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**2);
+        uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
         uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
         uint256 cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
         pool.accCapricornPerShare = pool.accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
