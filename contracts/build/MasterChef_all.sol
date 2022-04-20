@@ -991,6 +991,43 @@ pragma solidity 0.6.2;
 
 // CakeToken with Governance.
 contract CapricornToken is CRC20('CapricornSwap Token', 'CPCT') {
+
+    bytes32 public DOMAIN_SEPARATOR;
+    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    mapping(address => uint) public nonces;
+
+
+    constructor() public {
+        uint chainId;
+        assembly {
+            chainId := chainid
+        }
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256(bytes(name)),
+                keccak256(bytes('1')),
+                chainId,
+                address(this)
+            )
+        );
+    }
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+        require(deadline >= block.timestamp, 'CapswapV2: EXPIRED');
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                '\x19\x01',
+                DOMAIN_SEPARATOR,
+                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
+            )
+        );
+        address recoveredAddress = ecrecover(digest, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == owner, 'CapswapV2: INVALID_SIGNATURE');
+        _approve(owner, spender, value);
+    }
+
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
     function mint(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
@@ -1134,7 +1171,7 @@ contract MasterChef is Ownable {
     // CPCT tokens created per block.
     uint256 public cpctPerBlock;
     // Bonus muliplier(percent) for early cpct makers.
-    uint256 public BONUS_MULTIPLIER = 100;
+    uint256 public BONUS_MULTIPLIER = 10000;
     // Max bps
     uint256 public MAX_SHARE = 10000;
     // Burn share bps 
@@ -1332,7 +1369,7 @@ contract MasterChef is Ownable {
 
     function poolRewardPerBlock(uint256 _pid) external view returns (uint256 cpctReward){
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**2).div(100);
+        uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
         uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
         cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
     }
