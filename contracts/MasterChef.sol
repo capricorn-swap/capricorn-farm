@@ -7,6 +7,7 @@ import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
 
 import "./CapricornToken.sol";
 import "./SyrupBar.sol";
+import "./interfaces/IVestingMaster.sol";
 
 
 
@@ -52,10 +53,13 @@ contract MasterChef is Ownable {
     SyrupBar public syrup;
     // Dev address.
     address public devaddr;
+    // Dev vestingMaster
+    address public vestingMaster;
     // CPCT tokens created per block.
     uint256 public cpctPerBlock;
     // Bonus muliplier(percent) for early cpct makers.
     uint256 public BONUS_MULTIPLIER = 10000;
+    uint256 public BONUS_MULTIPLIER_MAX = 100000;
     // Max bps
     uint256 public MAX_SHARE = 10000;
     // Burn share bps 
@@ -113,6 +117,7 @@ contract MasterChef is Ownable {
     }
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
+        require(BONUS_MULTIPLIER<=BONUS_MULTIPLIER_MAX,'too large bonus');
         BONUS_MULTIPLIER = multiplierNumber;
     }
 
@@ -148,16 +153,24 @@ contract MasterChef is Ownable {
         return poolInfo.length;
     }
 
+    function getDistribution(uint256 multiplier) internal view returns (
+        uint burnAmount, uint devReward,uint farmBurn,uint farmReward){
+        uint cpctReward = multiplier.mul(cpctPerBlock).div(MAX_SHARE);
+        burnAmount = cpctReward.mul(BURN_SHARE).div(MAX_SHARE);
+        devReward = cpctReward.sub(burnAmount).mul(DEV_SHARE).div(MAX_SHARE);
+        uint syrupReward = cpctReward.sub(burnAmount).sub(devReward);
+        farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
+        farmReward = syrupReward.sub(farmBurn);
+    }
+
     function blockMint() public {
         if(block.number <= lastMinedBlock){
             return;
         }
         uint256 multiplier = getMultiplier(lastMinedBlock, block.number);
-        uint256 cpctReward = multiplier.mul(cpctPerBlock).div(MAX_SHARE);
+        ( uint burnAmount, uint devReward,uint farmBurn,uint farmReward)=
+            getDistribution(multiplier);
 
-        uint256 burnAmount = cpctReward.mul(BURN_SHARE).div(MAX_SHARE);
-        uint256 devReward = cpctReward.sub(burnAmount).mul(DEV_SHARE).div(MAX_SHARE);
-        uint256 syrupReward = cpctReward.sub(burnAmount).sub(devReward);
         if(burnAmount > 0){
             cpct.mint(address(1), burnAmount);
         }
@@ -168,21 +181,22 @@ contract MasterChef is Ownable {
             }
             devReward = devReward.sub(devBurn);
             if(devReward > 0){
-                cpct.mint(address(syrup),devReward);
-                syrup.lockDevReward(devReward);
+                cpct.mint(vestingMaster,devReward);
+                IVestingMaster(vestingMaster).lock(devaddr,devReward);
                 totalDevReward = totalDevReward.add(devReward);
             }
             if(devBurn > 0){
                 cpct.mint(address(1),devReward);
             }
         }
-        if(syrupReward > 0){
-            uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
-            syrupReward = syrupReward.sub(farmBurn);
-            if(farmBurn>0)
-                cpct.mint(address(1),farmBurn);
-            cpct.mint(address(syrup),syrupReward);
+
+        if(farmBurn>0){
+            cpct.mint(address(1),farmBurn);
         }
+        if(farmReward > 0){
+            cpct.mint(address(syrup),farmReward);
+        }
+
         lastMinedBlock = block.number;
     }
 
@@ -243,9 +257,8 @@ contract MasterChef is Ownable {
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
-            uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
-            uint256 cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
+            (,,,uint farmReward)=getDistribution(multiplier);
+            uint256 cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
             accCapricornPerShare = accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
         }
         return user.amount.mul(accCapricornPerShare).div(1e12).sub(user.rewardDebt);
@@ -253,9 +266,8 @@ contract MasterChef is Ownable {
 
     function poolRewardPerBlock(uint256 _pid) external view returns (uint256 cpctReward){
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 syrupReward = BONUS_MULTIPLIER.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
-        uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
-        cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
+        (,,,uint farmReward)=getDistribution(BONUS_MULTIPLIER);
+        cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -280,9 +292,8 @@ contract MasterChef is Ownable {
         }
         blockMint();
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 syrupReward = multiplier.mul(cpctPerBlock).mul(MAX_SHARE-BURN_SHARE).mul(MAX_SHARE-DEV_SHARE).div(MAX_SHARE**3);
-        uint256 farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
-        uint256 cpctReward = (syrupReward.sub(farmBurn)).mul(pool.allocPoint).div(totalAllocPoint);
+        (,,,uint farmReward)=getDistribution(multiplier);
+        uint256 cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
         pool.accCapricornPerShare = pool.accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
@@ -390,11 +401,9 @@ contract MasterChef is Ownable {
         devaddr = _devaddr;
     }
 
-    // withdraw dev reward from syrup
-    function devWithdraw() public {
-        require(msg.sender == devaddr, "dev: wut?");
-        uint256 amount = syrup.unlockDevReward();
-        require(amount > 0,'no reward');
-        syrup.safeCapricornTransfer(msg.sender, amount);
+    function updateVestingMaster(address _vestingMaster) public onlyOwner{
+        require(_vestingMaster != address(0));
+        vestingMaster = _vestingMaster;
     }
+
 }
