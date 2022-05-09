@@ -1,9 +1,11 @@
-pragma solidity 0.6.2;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.12;
 
-import "../../capricorn-swap-lib/contracts/token/CRC20/CRC20.sol";
+import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // CakeToken with Governance.
-contract CapricornToken is CRC20('CapricornSwap Token', 'CPCT') {
+contract CapricornToken is Ownable,ERC20('CapricornSwap Token', 'CPCT') {
 
     bytes32 public DOMAIN_SEPARATOR;
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
@@ -11,7 +13,7 @@ contract CapricornToken is CRC20('CapricornSwap Token', 'CPCT') {
     mapping(address => uint) public nonces;
 
 
-    constructor() public {
+    constructor() {
         uint chainId;
         assembly {
             chainId := chainid()

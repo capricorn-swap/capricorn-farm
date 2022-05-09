@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.2;
+pragma solidity >=0.6.2;
 
-import '../../capricorn-swap-lib/contracts/token/CRC20/ICRC20.sol';
-import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 import "./SmartChefInitializable.sol";
 
@@ -12,7 +12,7 @@ contract SmartChefFactory is Ownable {
 
     address [] public pools;
 
-    constructor() public {
+    constructor() {
         //
     }
 
@@ -32,8 +32,8 @@ contract SmartChefFactory is Ownable {
      * @return address of new smart chef contract
      */
     function deployPool(
-        ICRC20 _stakedToken,
-        ICRC20 _rewardToken,
+        IERC20 _stakedToken,
+        IERC20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock,
@@ -69,7 +69,7 @@ contract SmartChefFactory is Ownable {
         pools.push(smartChefAddress);
 
         // transfer rewardToken to smartChef, must approve first
-        ICRC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
+        IERC20(_rewardToken).transferFrom(msg.sender,smartChefAddress,_rewardPerBlock.mul(_bonusEndBlock.sub(_startBlock)));
 
         emit NewSmartChefContract(smartChefAddress);
     }

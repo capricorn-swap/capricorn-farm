@@ -1,9 +1,10 @@
-pragma solidity 0.6.2;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.12;
 
-import '../../capricorn-swap-lib/contracts/math/SafeMath.sol';
-import '../../capricorn-swap-lib/contracts/token/CRC20/ICRC20.sol';
-import '../../capricorn-swap-lib/contracts/token/CRC20/SafeCRC20.sol';
-import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 import "./CapricornToken.sol";
 import "./SyrupBar.sol";
@@ -20,7 +21,7 @@ import "./interfaces/IVestingMaster.sol";
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract MasterChef is Ownable {
     using SafeMath for uint256;
-    using SafeCRC20 for ICRC20;
+    using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
@@ -41,7 +42,7 @@ contract MasterChef is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        ICRC20 lpToken;           // Address of LP token contract.
+        IERC20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. CPCTs to distribute per block.
         uint256 lastRewardBlock;  // Last block number that CPCTs distribution occurs.
         uint256 accCapricornPerShare; // Accumulated CPCTs per share, times 1e12. See below.
@@ -96,7 +97,7 @@ contract MasterChef is Ownable {
         address _devaddr,
         uint256 _cpctPerBlock,
         uint256 _startBlock
-    ) public {
+    ) {
         cpct = _cpct;
         syrup = _syrup;
         devaddr = _devaddr;
@@ -202,7 +203,7 @@ contract MasterChef is Ownable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, ICRC20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }

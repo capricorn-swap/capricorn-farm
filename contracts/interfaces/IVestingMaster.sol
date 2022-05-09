@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity >=0.6.0;
 pragma experimental ABIEncoderV2;
 
-//import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import '../../../capricorn-swap-lib/contracts/token/CRC20/ICRC20.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IVestingMaster {
     struct LockedReward {
@@ -19,7 +18,7 @@ interface IVestingMaster {
     function claim() external returns (bool);
     function period() external view returns (uint256);
     function lockedPeriodAmount() external view returns (uint256);
-    function vestingToken() external view returns (ICRC20);
+    function vestingToken() external view returns (IERC20);
     /*
     function userLockedRewards(address account, uint256 idx)
         external

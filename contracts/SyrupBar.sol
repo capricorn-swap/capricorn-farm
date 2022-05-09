@@ -1,7 +1,8 @@
-pragma solidity 0.6.2;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.12;
 
-import "../../capricorn-swap-lib/contracts/access/Ownable.sol";
-import "../../capricorn-swap-lib/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./CapricornToken.sol";
 
@@ -14,7 +15,7 @@ contract SyrupBar is Ownable{
 
     constructor(
         CapricornToken _cpct
-    ) public {
+    ) {
         cpct = _cpct;
     }
 

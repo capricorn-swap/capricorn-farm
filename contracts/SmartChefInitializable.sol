@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.2;
+pragma solidity >=0.6.12;
 
-import '../../capricorn-swap-lib/contracts/access/Ownable.sol';
-import '../../capricorn-swap-lib/contracts/math/SafeMath.sol';
-import "../../capricorn-swap-lib/contracts/utils/ReentrancyGuard.sol";
-import '../../capricorn-swap-lib/contracts/token/CRC20/ICRC20.sol';
-import '../../capricorn-swap-lib/contracts/token/CRC20/SafeCRC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
+import './interfaces/IERC20INFO.sol';
 
 contract SmartChefInitializable is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
-    using SafeCRC20 for ICRC20;
+    using SafeERC20 for IERC20;
 
     // The address of the smart chef factory
     address public SMART_CHEF_FACTORY;
@@ -43,10 +44,10 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
     uint256 public PRECISION_FACTOR;
 
     // The reward token
-    ICRC20 public rewardToken;
+    IERC20 public rewardToken;
 
     // The staked token
-    ICRC20 public stakedToken;
+    IERC20 public stakedToken;
 
     // Info of each user that stakes tokens (stakedToken)
     mapping(address => UserInfo) public userInfo;
@@ -65,7 +66,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
     event RewardsStop(uint256 blockNumber);
     event Withdraw(address indexed user, uint256 amount);
 
-    constructor() public {
+    constructor() {
         SMART_CHEF_FACTORY = msg.sender;
     }
 
@@ -80,8 +81,8 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
      * @param _admin: admin address with ownership
      */
     function initialize(
-        ICRC20 _stakedToken,
-        ICRC20 _rewardToken,
+        IERC20 _stakedToken,
+        IERC20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock,
@@ -105,7 +106,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
             poolLimitPerUser = _poolLimitPerUser;
         }
 
-        uint256 decimalsRewardToken = uint256(rewardToken.decimals());
+        uint256 decimalsRewardToken = uint256(IERC20INFO(address(rewardToken)).decimals());
         require(decimalsRewardToken < 30, "Must be inferior to 30");
 
         PRECISION_FACTOR = uint256(10**(uint256(30).sub(decimalsRewardToken)));
@@ -218,7 +219,7 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
         require(_tokenAddress != address(stakedToken), "Cannot be staked token");
         require(_tokenAddress != address(rewardToken), "Cannot be reward token");
 
-        ICRC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
 
         emit AdminTokenRecovery(_tokenAddress, _tokenAmount);
     }
@@ -251,13 +252,13 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
 
     function updateRewardBalance() internal {
         uint256 totalReward = rewardPerBlock.mul(bonusEndBlock.sub(startBlock));
-        uint256 rewardBalance = ICRC20(rewardToken).balanceOf(address(this));
+        uint256 rewardBalance = IERC20(rewardToken).balanceOf(address(this));
         if(rewardBalance < totalReward){
             // make sure smartChef has enough reward, must approve first
-            ICRC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
+            IERC20(rewardToken).transferFrom(msg.sender,address(this),totalReward.sub(rewardBalance));
         }
         if(rewardBalance > totalReward){
-            ICRC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
+            IERC20(rewardToken).transfer(msg.sender,rewardBalance.sub(totalReward));
         }
     }
 
