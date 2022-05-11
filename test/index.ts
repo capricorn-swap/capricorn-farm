@@ -25,6 +25,14 @@ describe("Farm contracts", function () {
         expect(await this.syrup.owner()).to.equal(this.owner);
       });
 
+      it("Deploy SmartChefFactory", async function () {
+        this.SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
+        this.smartcheffactory= await this.SmartChefFactory.deploy();
+        await this.smartcheffactory.deployed();
+        console.log("deploy SmartChefFactory",this.smartcheffactory.address);
+        expect(await this.smartcheffactory.owner()).to.equal(this.owner);
+      });
+
       it("Deploy MasterChef", async function () {
         this.MasterChef= await ethers.getContractFactory("MasterChef");
         this.masterchef= await this.MasterChef.deploy(this.cpct.address,this.syrup.address,this.owner,"45000000000000000000",100);

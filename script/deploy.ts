@@ -35,6 +35,11 @@ async function main() {
   await masterchef.deployed();
   console.log("MasterChef deployed to:", masterchef.address);
 
+  const SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
+  const smartcheffactory= await SmartChefFactory.deploy();
+  await smartcheffactory.deployed();
+  console.log("SmartChefFactory deployed to:", smartcheffactory.address);
+
   const mintAmount = "50000000000000000000000000"
   const firstMint= await cpct.mint(deployer.address,mintAmount);
   // wait until the transaction is mined
