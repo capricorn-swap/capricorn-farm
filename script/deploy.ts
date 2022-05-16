@@ -29,7 +29,7 @@ async function main() {
   console.log("SyrupBar deployed to:", syrup.address);
 
   const cpctPerBlock = "45000000000000000000";
-  const startBlock = 100;
+  const startBlock = 200000;
   const MasterChef= await ethers.getContractFactory("MasterChef");
   const masterchef= await MasterChef.deploy(cpct.address,syrup.address,deployer.address,cpctPerBlock,startBlock);
   await masterchef.deployed();
