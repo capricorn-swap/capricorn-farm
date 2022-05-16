@@ -164,7 +164,7 @@ contract MasterChef is Ownable {
         farmReward = syrupReward.sub(farmBurn);
     }
 
-    function blockMint() public {
+    function blockMint() internal {
         if(block.number <= lastMinedBlock){
             return;
         }
