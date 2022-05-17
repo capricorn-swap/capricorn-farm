@@ -41,6 +41,20 @@ describe("Farm contracts", function () {
         expect(await this.masterchef.owner()).to.equal(this.owner);
       });
 
+      it("Deploy CubeStaking", async function () {
+        const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
+        const rewardToken = this.cpct.address;
+        const rewardPerBlock = "45000000000000000000";
+        const startBlock = 100;
+        const endBlock = 1000;
+        const admin = this.owner;
+        this.CubeStaking= await ethers.getContractFactory("CubeStaking");
+        this.cubeStaking= await this.CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin,wcube);
+        await this.cubeStaking.deployed();
+        console.log("deploy cubeStaking",this.cubeStaking.address);
+        expect(await this.cubeStaking.owner()).to.equal(this.owner);
+      });
+
       it("first mint cpct",async function(){
         const firstMint= await this.cpct.mint(this.owner,50000000);
         // wait until the transaction is mined

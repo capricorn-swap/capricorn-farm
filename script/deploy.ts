@@ -35,6 +35,17 @@ async function main() {
   await masterchef.deployed();
   console.log("MasterChef deployed to:", masterchef.address);
 
+  const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
+  const rewardToken = cpct.address;
+  const rewardPerBlock = "45000000000000000000";
+  const startBlock = 200000;
+  const endBlock = 400000;
+  const admin = deployer.address;
+  const CubeStaking= await ethers.getContractFactory("CubeStaking");
+  const cubeStaking= await CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin,wcube);
+  await cubeStaking.deployed();
+  console.log("deploy cubeStaking",cubeStaking.address);
+
   const SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
   const smartcheffactory= await SmartChefFactory.deploy();
   await smartcheffactory.deployed();
