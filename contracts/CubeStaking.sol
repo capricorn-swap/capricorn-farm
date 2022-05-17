@@ -21,6 +21,7 @@ contract CubeStaking is Ownable {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         bool inBlackList;
+        bool inWhiteList;
     }
 
     // Info of each pool.
@@ -111,6 +112,40 @@ contract CubeStaking is Ownable {
         userInfo[_blacklistAddress].inBlackList = false;
     }
 
+    function setWhiteList(address _whitelistAddress) public onlyAdmin {
+        userInfo[_whitelistAddress].inWhiteList = true;
+    }
+
+    function removeWhiteList(address _whitelistAddress) public onlyAdmin {
+        userInfo[_whitelistAddress].inWhiteList = false;
+    }
+
+
+    // batch operation
+    function batchSetBlackList(address [] calldata _blacklistAddresses) public onlyAdmin {
+        for(uint i=0; i < _blacklistAddresses.length; i++){
+            userInfo[_blacklistAddresses[i]].inBlackList = true;
+        }
+    }
+
+    function batchRemoveBlackList(address [] calldata  _blacklistAddresses) public onlyAdmin {
+        for(uint i=0; i < _blacklistAddresses.length; i++){
+            userInfo[_blacklistAddresses[i]].inBlackList = false;
+        }
+    }
+
+    function batchSetWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
+        for(uint i=0; i < _whitelistAddresses.length; i++){
+            userInfo[_whitelistAddresses[i]].inWhiteList = true;
+        }
+    }
+
+    function batchRemoveWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
+        for(uint i=0; i < _whitelistAddresses.length; i++){
+            userInfo[_whitelistAddresses[i]].inWhiteList = false;
+        }
+    }
+
     // Set the limit amount. Can only be called by the owner.
     function setLimitAmount(uint256 _amount) public onlyOwner {
         limitAmount = _amount;
@@ -174,6 +209,7 @@ contract CubeStaking is Ownable {
 
         require (user.amount.add(msg.value) <= limitAmount, 'exceed the top');
         require (!user.inBlackList, 'in black list');
+        require (user.inWhiteList, 'not in white list');
 
         updatePool(0);
         if (user.amount > 0) {
