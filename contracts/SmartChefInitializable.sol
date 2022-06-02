@@ -229,6 +229,8 @@ contract SmartChefInitializable is Ownable, ReentrancyGuard {
      * @dev Only callable by owner
      */
     function stopReward() external onlyOwner {
+        require(block.number > startBlock,'not start');
+        require(block.number < bonusEndBlock,'not end');
         bonusEndBlock = block.number;
     }
 
