@@ -68,14 +68,14 @@ contract CubeStaking is Ownable {
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock,
-        address _adminAddress,
+        address _adminAddress
     ) {
         rewardToken = _rewardToken;
         rewardPerBlock = _rewardPerBlock;
         startBlock = _startBlock;
         bonusEndBlock = _bonusEndBlock;
         adminAddress = _adminAddress;
-        WCUBE = _wcube;
+        WCUBE = address(_wcube);
 
         // staking pool
         poolInfo.push(PoolInfo({
