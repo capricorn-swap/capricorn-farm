@@ -28,7 +28,7 @@ contract MasterChef is Ownable {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of CPCTs
+        // We do some fancy math here. Basically, any point in time, the amount of CORNs
         // entitled to a user but is pending to be distributed is:
         //
         //   pending reward = (user.amount * pool.accCapricornPerShare) - user.rewardDebt
@@ -43,22 +43,22 @@ contract MasterChef is Ownable {
     // Info of each pool.
     struct PoolInfo {
         IERC20 lpToken;           // Address of LP token contract.
-        uint256 allocPoint;       // How many allocation points assigned to this pool. CPCTs to distribute per block.
-        uint256 lastRewardBlock;  // Last block number that CPCTs distribution occurs.
-        uint256 accCapricornPerShare; // Accumulated CPCTs per share, times 1e12. See below.
+        uint256 allocPoint;       // How many allocation points assigned to this pool. CORNs to distribute per block.
+        uint256 lastRewardBlock;  // Last block number that CORNs distribution occurs.
+        uint256 accCapricornPerShare; // Accumulated CORNs per share, times 1e12. See below.
     }
 
-    // The CPCT TOKEN!
-    CapricornToken public cpct;
+    // The CORN TOKEN!
+    CapricornToken public corn;
     // The SYRUP TOKEN!
     SyrupBar public syrup;
     // Dev address.
     address public devaddr;
     // Dev vestingMaster
     address public vestingMaster;
-    // CPCT tokens created per block.
-    uint256 public cpctPerBlock;
-    // Bonus muliplier(percent) for early cpct makers.
+    // CORN tokens created per block.
+    uint256 public cornPerBlock;
+    // Bonus muliplier(percent) for early corn makers.
     uint256 public BONUS_MULTIPLIER = 10000;
     uint256 public BONUS_MULTIPLIER_MAX = 100000;
     // Max bps
@@ -78,9 +78,9 @@ contract MasterChef is Ownable {
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when CPCT mining starts.
+    // The block number when CORN mining starts.
     uint256 public startBlock;
-    // The block number when CPCT last mined.
+    // The block number when CORN last mined.
     uint256 public lastMinedBlock;
     // Total Dev Reward
     uint256 public totalDevReward = 0;
@@ -92,22 +92,22 @@ contract MasterChef is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     constructor(
-        CapricornToken _cpct,
+        CapricornToken _corn,
         SyrupBar _syrup,
         address _devaddr,
-        uint256 _cpctPerBlock,
+        uint256 _cornPerBlock,
         uint256 _startBlock
     ) {
-        cpct = _cpct;
+        corn = _corn;
         syrup = _syrup;
         devaddr = _devaddr;
-        cpctPerBlock = _cpctPerBlock;
+        cornPerBlock = _cornPerBlock;
         startBlock = _startBlock;
         lastMinedBlock = _startBlock;
 
         // staking pool
         poolInfo.push(PoolInfo({
-            lpToken: _cpct,
+            lpToken: _corn,
             allocPoint: 10000,
             lastRewardBlock: startBlock,
             accCapricornPerShare: 0
@@ -156,10 +156,10 @@ contract MasterChef is Ownable {
 
     function getDistribution(uint256 multiplier) internal view returns (
         uint burnAmount, uint devReward,uint farmBurn,uint farmReward){
-        uint cpctReward = multiplier.mul(cpctPerBlock).div(MAX_SHARE);
-        burnAmount = cpctReward.mul(BURN_SHARE).div(MAX_SHARE);
-        devReward = cpctReward.sub(burnAmount).mul(DEV_SHARE).div(MAX_SHARE);
-        uint syrupReward = cpctReward.sub(burnAmount).sub(devReward);
+        uint cornReward = multiplier.mul(cornPerBlock).div(MAX_SHARE);
+        burnAmount = cornReward.mul(BURN_SHARE).div(MAX_SHARE);
+        devReward = cornReward.sub(burnAmount).mul(DEV_SHARE).div(MAX_SHARE);
+        uint syrupReward = cornReward.sub(burnAmount).sub(devReward);
         farmBurn = syrupReward.mul(MAX_SHARE-POOL_SHARE).mul(FARM_BURN_SHARE).div(MAX_SHARE**2);
         farmReward = syrupReward.sub(farmBurn);
     }
@@ -173,7 +173,7 @@ contract MasterChef is Ownable {
             getDistribution(multiplier);
 
         if(burnAmount > 0){
-            cpct.mint(address(1), burnAmount);
+            corn.mint(address(1), burnAmount);
         }
         if(devReward > 0){
             uint devBurn = 0;
@@ -182,20 +182,20 @@ contract MasterChef is Ownable {
             }
             devReward = devReward.sub(devBurn);
             if(devReward > 0){
-                cpct.mint(vestingMaster,devReward);
+                corn.mint(vestingMaster,devReward);
                 IVestingMaster(vestingMaster).lock(devaddr,devReward);
                 totalDevReward = totalDevReward.add(devReward);
             }
             if(devBurn > 0){
-                cpct.mint(address(1),devReward);
+                corn.mint(address(1),devReward);
             }
         }
 
         if(farmBurn>0){
-            cpct.mint(address(1),farmBurn);
+            corn.mint(address(1),farmBurn);
         }
         if(farmReward > 0){
-            cpct.mint(address(syrup),farmReward);
+            corn.mint(address(syrup),farmReward);
         }
 
         lastMinedBlock = block.number;
@@ -218,7 +218,7 @@ contract MasterChef is Ownable {
         updateStakingPool();
     }
 
-    // Update the given pool's CPCT allocation point. Can only be called by the owner.
+    // Update the given pool's CORN allocation point. Can only be called by the owner.
     function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
@@ -250,7 +250,7 @@ contract MasterChef is Ownable {
         return _to.sub(_from).mul(BONUS_MULTIPLIER);
     }
 
-    // View function to see pending CPCTs on frontend.
+    // View function to see pending CORNs on frontend.
     function pendingCapricorn(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
@@ -259,16 +259,16 @@ contract MasterChef is Ownable {
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
             (,,,uint farmReward)=getDistribution(multiplier);
-            uint256 cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
-            accCapricornPerShare = accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
+            uint256 cornReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
+            accCapricornPerShare = accCapricornPerShare.add(cornReward.mul(1e12).div(lpSupply));
         }
         return user.amount.mul(accCapricornPerShare).div(1e12).sub(user.rewardDebt);
     }
 
-    function poolRewardPerBlock(uint256 _pid) external view returns (uint256 cpctReward){
+    function poolRewardPerBlock(uint256 _pid) external view returns (uint256 cornReward){
         PoolInfo storage pool = poolInfo[_pid];
         (,,,uint farmReward)=getDistribution(BONUS_MULTIPLIER);
-        cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
+        cornReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -294,15 +294,15 @@ contract MasterChef is Ownable {
         blockMint();
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         (,,,uint farmReward)=getDistribution(multiplier);
-        uint256 cpctReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
-        pool.accCapricornPerShare = pool.accCapricornPerShare.add(cpctReward.mul(1e12).div(lpSupply));
+        uint256 cornReward = farmReward.mul(pool.allocPoint).div(totalAllocPoint);
+        pool.accCapricornPerShare = pool.accCapricornPerShare.add(cornReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for CPCT allocation.
+    // Deposit LP tokens to MasterChef for CORN allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
 
-        require (_pid != 0, 'deposit CPCT by staking');
+        require (_pid != 0, 'deposit CORN by staking');
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -324,7 +324,7 @@ contract MasterChef is Ownable {
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
 
-        require (_pid != 0, 'withdraw CPCT by unstaking');
+        require (_pid != 0, 'withdraw CORN by unstaking');
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -342,7 +342,7 @@ contract MasterChef is Ownable {
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
-    // Stake CPCT tokens to MasterChef
+    // Stake CORN tokens to MasterChef
     function enterStaking(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
@@ -362,7 +362,7 @@ contract MasterChef is Ownable {
         emit Deposit(msg.sender, 0, _amount);
     }
 
-    // Withdraw CPCT tokens from STAKING.
+    // Withdraw CORN tokens from STAKING.
     function leaveStaking(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
@@ -391,7 +391,7 @@ contract MasterChef is Ownable {
         user.rewardDebt = 0;
     }
 
-    // Safe cpct transfer function, just in case if rounding error causes pool to not have enough CPCTs.
+    // Safe corn transfer function, just in case if rounding error causes pool to not have enough CORNs.
     function safeCapricornTransfer(address _to, uint256 _amount) internal {
         syrup.safeCapricornTransfer(_to, _amount);
     }

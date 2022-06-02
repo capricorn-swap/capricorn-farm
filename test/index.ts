@@ -49,7 +49,7 @@ describe("Farm contracts", function () {
         const endBlock = 1000;
         const admin = this.owner;
         this.CubeStaking= await ethers.getContractFactory("CubeStaking");
-        this.cubeStaking= await this.CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin,wcube);
+        this.cubeStaking= await this.CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin);
         await this.cubeStaking.deployed();
         console.log("deploy cubeStaking",this.cubeStaking.address);
         expect(await this.cubeStaking.owner()).to.equal(this.owner);

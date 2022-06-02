@@ -4,8 +4,8 @@ pragma solidity >=0.6.12;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// CakeToken with Governance.
-contract CapricornToken is Ownable,ERC20('CapricornSwap Token', 'CPCT') {
+// CornToken with Governance.
+contract CapricornToken is Ownable,ERC20('CORN', 'CORN') {
 
     bytes32 public DOMAIN_SEPARATOR;
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
