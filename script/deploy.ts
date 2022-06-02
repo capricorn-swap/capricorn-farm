@@ -19,24 +19,25 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const CapricornToken= await ethers.getContractFactory("CapricornToken");
-  const cpct = await CapricornToken.deploy();
-  await cpct.deployed();
-  console.log("CapricornToken deployed to:", cpct.address);
+  const CORN = await CapricornToken.deploy();
+  await CORN.deployed();
+  console.log("CapricornToken deployed to:", CORN.address);
 
   const Syrup= await ethers.getContractFactory("SyrupBar");
-  const syrup= await Syrup.deploy(cpct.address);
+  const syrup= await Syrup.deploy(CORN.address);
   await syrup.deployed();
   console.log("SyrupBar deployed to:", syrup.address);
 
-  const cpctPerBlock = "45000000000000000000";
-  const startBlock = 200000;
+  const CORNPerBlock = "45000000000000000000";
+  const startBlock = 570000;
   const MasterChef= await ethers.getContractFactory("MasterChef");
-  const masterchef= await MasterChef.deploy(cpct.address,syrup.address,deployer.address,cpctPerBlock,startBlock);
+  const masterchef= await MasterChef.deploy(CORN.address,syrup.address,deployer.address,CORNPerBlock,startBlock);
   await masterchef.deployed();
   console.log("MasterChef deployed to:", masterchef.address);
 
+/*
   const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
-  const rewardToken = cpct.address;
+  const rewardToken = CORN.address;
   const rewardPerBlock = "45000000000000000000";
   const startBlock = 200000;
   const endBlock = 400000;
@@ -45,22 +46,37 @@ async function main() {
   const cubeStaking= await CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin,wcube);
   await cubeStaking.deployed();
   console.log("deploy cubeStaking",cubeStaking.address);
+*/
 
   const SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
   const smartcheffactory= await SmartChefFactory.deploy();
   await smartcheffactory.deployed();
   console.log("SmartChefFactory deployed to:", smartcheffactory.address);
 
+  
+/*
+  const masterchef_addr = '0x4C9e77C722693F119Fda85D8Ff5e4b9E64258AbC';
+
+  const CapricornToken= await ethers.getContractFactory("CapricornToken");
+  const CORN_addr = '0x9020d0EF9A973319163Ee0C8b9580813b8c459f5';
+  const CORN = CapricornToken.attach(CORN_addr);
+
+  const SyrupBar= await ethers.getContractFactory("SyrupBar");
+  const syrup_addr = '0xc06383f846537271843E2dFc8F1f96a6798F415D';
+  const syrup = SyrupBar.attach(syrup_addr);
+*/
   const mintAmount = "50000000000000000000000000"
-  const firstMint= await cpct.mint(deployer.address,mintAmount);
+  const firstMint= await CORN.mint(deployer.address,mintAmount);
   // wait until the transaction is mined
   await firstMint.wait();
-  console.log("firstMint:",await cpct.balanceOf(deployer.address));
+  console.log("firstMint:",await CORN.balanceOf(deployer.address));
+  
 
-  const setCpctOwner = await cpct.transferOwnership(masterchef.address);
+
+  const setCornOwner = await CORN.transferOwnership(masterchef.address);
   // wait until the transaction is mined
-  await setCpctOwner.wait();
-  console.log("set CPCT owner:",await cpct.owner());
+  await setCornOwner.wait();
+  console.log("set CPCT owner:",await CORN.owner());
 
   const setSyrupBarOwner = await syrup.transferOwnership(masterchef.address);
   // wait until the transaction is mined

@@ -18,22 +18,33 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  // test
-  //const masterchef_addr = '0x4b3f5a330A64D3CFAa33ba6E2D2936a195904f38';
-  //const vestingMaster_addr = '0x4d84d4FAfD8CBd8B28BC888c6EC714F55194A036';
-  // public test 
-  const masterchef_addr = '0x6273638e3Be5770851E23bfcE27d69592BEDCd2c';
-  const vestingMaster_addr = '0x04af25146Ad4806F1281c6E868872064334549aF';
-  // cube-mainnet
-  //const masterchef_addr = '';
-  //const vestingMaster_addr = '';
+  /*/ // test
+  const masterchef_addr = '0x4b3f5a330A64D3CFAa33ba6E2D2936a195904f38';
+  const smartcheffactory_addr = '0x479EcE2b84C4fFb53F5E551fC5d924D3f87ab922';
 
+  const signer_addr = '0x2c76fe561cce48b50c4f918ab0affe940d57bfeb';
+  //*/
+
+  //* // public test
+  const masterchef_addr = '0x6273638e3Be5770851E23bfcE27d69592BEDCd2c';
+  const smartcheffactory_addr = '0x25070baCb0c3CcB2Db44d54dD02f5dB50024204d';
+
+  const signer_addr = '0x2fd6cf4118cffabd8b7163651fecba6517c81e5f';
+  //*/
+  
   const MasterChef= await ethers.getContractFactory("MasterChef");
   const masterchef= await MasterChef.attach(masterchef_addr);
-  const setVestingMaster = await masterchef.updateVestingMaster(vestingMaster_addr);
-  await setVestingMaster.wait();
-  const vestingMaster = await masterchef.vestingMaster();
-  console.log("set new vestingMaster",vestingMaster);
+  const setMasterChefOwner = await masterchef.transferOwnership(signer_addr);
+  await setMasterChefOwner.wait();
+  const masterChefOwner = await masterchef.owner();
+  console.log("set MasterChef Owner",masterChefOwner);
+
+  const SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
+  const smartchef= await SmartChefFactory.attach(smartcheffactory_addr);
+  const setSmartChefOwner = await smartchef.transferOwnership(signer_addr);
+  await setSmartChefOwner.wait();
+  const smartChefOwner = await smartchef.owner();
+  console.log("set SmartChefFactory Owner",smartChefOwner);
 
 }
 
@@ -43,3 +54,4 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+

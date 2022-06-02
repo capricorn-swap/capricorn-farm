@@ -63,13 +63,12 @@ contract CubeStaking is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 amount);
 
     constructor(
-        IERC20 _lp,
+        IERC20 _wcube,
         IERC20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock,
         address _adminAddress,
-        address _wcube
     ) {
         rewardToken = _rewardToken;
         rewardPerBlock = _rewardPerBlock;
@@ -80,7 +79,7 @@ contract CubeStaking is Ownable {
 
         // staking pool
         poolInfo.push(PoolInfo({
-            lpToken: _lp,
+            lpToken: _wcube,
             allocPoint: 1000,
             lastRewardBlock: startBlock,
             accCakePerShare: 0
