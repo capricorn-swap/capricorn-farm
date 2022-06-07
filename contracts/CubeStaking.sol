@@ -22,6 +22,7 @@ contract CubeStaking is Ownable {
         uint256 rewardDebt; // Reward debt. See explanation below.
         bool inBlackList;
         bool inWhiteList;
+        uint256 pending; 
     }
 
     // Info of each pool.
@@ -50,7 +51,7 @@ contract CubeStaking is Ownable {
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
     // limit 10 CUBE here
-    uint256 public limitAmount = 10000000000000000000;
+    uint256 public limitAmount = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
     // The block number when CORN mining starts.
@@ -172,7 +173,7 @@ contract CubeStaking is Ownable {
             uint256 cornReward = multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
             accCornPerShare = accCornPerShare.add(cornReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accCornPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accCornPerShare).div(1e12).sub(user.rewardDebt).add(user.pending);
     }
 
     // Update reward variables of the given pool to be up-to-date.
@@ -206,6 +207,7 @@ contract CubeStaking is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
+        require (block.number < bonusEndBlock,'finished');
         require (user.amount.add(msg.value) <= limitAmount, 'exceed the top');
         require (!user.inBlackList, 'in black list');
         require (user.inWhiteList, 'not in white list');
@@ -214,7 +216,7 @@ contract CubeStaking is Ownable {
         if (user.amount > 0) {
             uint256 pending = user.amount.mul(pool.accCornPerShare).div(1e12).sub(user.rewardDebt);
             if(pending > 0) {
-                rewardToken.safeTransfer(address(msg.sender), pending);
+                user.pending = user.pending.add(pending);
             }
         }
         if(msg.value > 0) {
@@ -222,6 +224,7 @@ contract CubeStaking is Ownable {
             assert(IWCUBE(WCUBE).transfer(address(this), msg.value));
             user.amount = user.amount.add(msg.value);
         }
+
         user.rewardDebt = user.amount.mul(pool.accCornPerShare).div(1e12);
 
         emit Deposit(msg.sender, msg.value);
@@ -240,15 +243,23 @@ contract CubeStaking is Ownable {
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(0);
         uint256 pending = user.amount.mul(pool.accCornPerShare).div(1e12).sub(user.rewardDebt);
-        if(pending > 0 && !user.inBlackList) {
-            rewardToken.safeTransfer(address(msg.sender), pending);
+
+        user.pending = user.pending.add(pending);
+        user.amount = user.amount.sub(_amount);
+        user.rewardDebt = user.amount.mul(pool.accCornPerShare).div(1e12);
+
+        if(block.number > bonusEndBlock && user.pending > 0){
+            uint256 reward = user.pending;
+            user.pending = 0;
+            rewardToken.safeTransfer(address(msg.sender), reward);
         }
+
         if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
             IWCUBE(WCUBE).withdraw(_amount);
             safeTransferCUBE(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accCornPerShare).div(1e12);
+        
+        
 
         emit Withdraw(msg.sender, _amount);
     }
