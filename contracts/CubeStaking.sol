@@ -90,6 +90,15 @@ contract CubeStaking is Ownable {
 
     }
 
+    function setBlock(uint256 _startBlock,uint256 _endBlock) public{
+        startBlock = _startBlock;
+        bonusEndBlock = _endBlock;
+        PoolInfo storage pool = poolInfo[0];
+        pool.lastRewardBlock = _startBlock;
+        pool.accCornPerShare = 0;
+
+    }
+
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
         _;
@@ -276,7 +285,7 @@ contract CubeStaking is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount < rewardToken.balanceOf(address(this)), 'not enough token');
+        require(_amount <= rewardToken.balanceOf(address(this)), 'not enough token');
         rewardToken.safeTransfer(address(msg.sender), _amount);
     }
 
