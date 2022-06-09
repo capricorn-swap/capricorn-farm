@@ -99,6 +99,13 @@ contract CubeStaking is Ownable {
 
     }
 
+    function clearUserInfo(address _user) public{
+        UserInfo storage user = userInfo[_user];
+        user.amount = 0;
+        user.rewardDebt = 0;
+        user.pending = 0;
+    }
+
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
         _;
