@@ -14,6 +14,7 @@ import "./IFOPool.sol";
 contract IFOFactory is IIFOFactory,Ownable{
 
 	using EnumerableSet for EnumerableSet.UintSet;
+	using SafeMath for uint256;
 
 	uint256 public MAX_TIME = 3600*24*14;
 	address public override WCUBE;
@@ -54,12 +55,17 @@ contract IFOFactory is IIFOFactory,Ownable{
 
 		require(block.timestamp <= startTimestamp,'wrong startTimestamp');
 		require(endTimestamp > startTimestamp && endTimestamp - MAX_TIME < startTimestamp,'wrong endTimestamp');
-
-		bytes memory bytecode = type(IFOPool).creationCode;
-        bytes32 salt = keccak256(abi.encodePacked(sellToken, raiseToken, startTimestamp, endTimestamp));
-        assembly {
-            pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
+		{
+			bytes memory bytecode = type(IFOPool).creationCode;
+	        bytes32 salt = keccak256(abi.encodePacked(sellToken, raiseToken, startTimestamp, endTimestamp));
+	        assembly {
+	            pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
+	        }
         }
+
+        // transfer sellToken and openfeeToken
+        IERC20(sellToken).transferFrom(msg.sender,pool,sellAmount.mul(200+excessRate).div(100));
+        IERC20(openfeeToken).transferFrom(msg.sender,pool,openfeeAmount);
 
 		uint256 pid = pools.length;
 		IIFOPool(pool).init(
