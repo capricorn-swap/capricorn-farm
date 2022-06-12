@@ -288,6 +288,7 @@ contract CubeStaking is Ownable {
         emit EmergencyWithdraw(msg.sender, user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
+        user.pending = 0;
     }
 
     // Withdraw reward. EMERGENCY ONLY.
