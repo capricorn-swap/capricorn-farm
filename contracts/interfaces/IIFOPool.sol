@@ -5,16 +5,16 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface IIFOPool {
-
-	enum stakePeriod {
+enum stakePeriod {
 		ONE_MONTH,
 		TOW_MONTH,
 		THREE_MONTH
-	}
+}
 
+interface IIFOPool {
 
 	function init(
+		uint256 _pid,
 		address _initiator,
 		address _sellToken,
 		uint _sellAmount,
@@ -42,10 +42,16 @@ interface IIFOPool {
 
 	function verify(bool _verified) external;
 
+	// for user
+	function deposit() external payable;
 	function deposit(uint256 amount) external;
 	function quit(uint256 amount) external;
 	function claim() external;
+	function pending(address user) external view returns (uint256 reward,uint256 refund);
 
-	function pending(address user) external view returns (uint256 amount);
+	function rebalance() external;
+
+	// for initiator
+	function unlockLiquidity() external;
 
 }

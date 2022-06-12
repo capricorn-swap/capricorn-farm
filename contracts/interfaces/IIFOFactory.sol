@@ -5,6 +5,8 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "./IIFOPool.sol";
+
 interface IIFOFactory {
 
 	struct PoolInfo{
@@ -20,14 +22,17 @@ interface IIFOFactory {
 		stakePeriod period;
 		string metaData; // json string {"siteURL": "http://xxx","reportURL": "http://xxx"}
 	}
-	enum stakePeriod {
-		ONE_MONTH,
-		TWO_MONTH,
-		THREE_MONTH
-	}
 
 	function poolsLength() external  view returns(uint256);
-	function pools(uint256 pid) external view returns(PoolInfo memory poolInfo);
+
+	function validator() external view returns (address);
+	function WCUBE() external view returns (address);
+
+	function swapRouter() external view returns (address);
+	function swapFactory() external view returns (address);
+
+	function feeTo() external view returns (address);
+
 	function excessRate() external view returns(uint256); // x/100
 
 	function openfeeToken() external view returns(address);
@@ -35,9 +40,11 @@ interface IIFOFactory {
 	function ifoFeeRate() external view returns (uint256); // x/10000
 
 	function mySeeds(address user) external view returns(PoolInfo [] memory _pools);
+	function myCrops(address user) external view returns(PoolInfo [] memory _pools);
 	function verifiedPools() external view returns(PoolInfo [] memory _pools);
 
 	function verify(uint256 pid,bool verified) external;
+
 
 	function createPool(
 		address sellToken,
