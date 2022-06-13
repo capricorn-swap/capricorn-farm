@@ -56,4 +56,7 @@ interface IIFOFactory {
 		stakePeriod period,
 		string memory metaData // json string 
 		) external returns(address pool);
+
+	function enter(uint256 pid,address user) external;
+	function quit(uint256 pid,address user) external;
 }

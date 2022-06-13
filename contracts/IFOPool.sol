@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 import "./interfaces/IIFOPool.sol";
 import "./interfaces/IIFOFactory.sol";
@@ -18,6 +19,7 @@ import "./libraries/CapswapV2Library.sol";
 contract IFOPool is IIFOPool{
 	using SafeMath for uint256;
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
 	bool inited = false;
 	bool settled = false;
@@ -51,6 +53,8 @@ contract IFOPool is IIFOPool{
     }
 
     mapping (address => UserInfo) public userInfo;
+
+    EnumerableSet.AddressSet users;
 
 	modifier onlyFactory{
 		require(msg.sender == factory,'only factory');
@@ -110,7 +114,19 @@ contract IFOPool is IIFOPool{
 		string memory _metaData, // json string 
 		uint256 _userCount
 	){
-
+		return (
+			verified,
+			initiator,
+			sellToken,
+			sellAmount,
+			raiseToken,
+			raiseAmount,
+			startTimestamp,
+			endTimestamp,
+			period,
+			metaData,
+			users.length()
+		);
 	}
 
 	function verify(bool _verified) override external onlyFactory{
@@ -130,7 +146,12 @@ contract IFOPool is IIFOPool{
 			uint amount = msg.value.sub(fee);
 
 	        user.amount = user.amount.add(amount);
+
+	        IIFOFactory(factory).enter(pid,msg.sender);
+	        users.add(msg.sender);
         }
+
+
 
 	}
 
@@ -145,6 +166,9 @@ contract IFOPool is IIFOPool{
 			amount = amount.sub(fee);
 
 			user.amount = user.amount.add(amount);
+
+			IIFOFactory(factory).enter(pid,msg.sender);
+	        users.add(msg.sender);
 		}
 
 	}
@@ -169,6 +193,11 @@ contract IFOPool is IIFOPool{
 		}
 		else{
 			IERC20(raiseToken).transfer(msg.sender, amount);
+		}
+
+		if(user.amount == 0){
+			IIFOFactory(factory).quit(pid,msg.sender);
+	        users.remove(msg.sender);
 		}
 
 	}

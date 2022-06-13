@@ -170,12 +170,12 @@ contract IFOFactory is IIFOFactory,Ownable{
 		}
 	}
 
-	function enter(uint256 pid,address user) external{
+	function enter(uint256 pid,address user) override external{
 		require(pools[pid].pool_address == msg.sender,'invalid address');
 		crops[user].add(pid);
 
 	}
-	function quit(uint256 pid,address user) external{
+	function quit(uint256 pid,address user) override external{
 		require(pools[pid].pool_address == msg.sender,'invalid address');
 		crops[user].remove(pid);
 	}

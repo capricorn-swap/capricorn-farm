@@ -48,7 +48,7 @@ async function main() {
   console.log("setOpenfeeToken",await ifoFactory.openfeeToken());
 
   // setOpenfeeAmount
-  const setOpenfeeAmount = await ifoFactory.setOpenfeeAmount("10000000000000000000");
+  const setOpenfeeAmount = await ifoFactory.setOpenfeeAmount("20000000000000000000");
   await setOpenfeeAmount.wait();
   console.log("setOpenfeeAmount",await ifoFactory.openfeeAmount());
 
