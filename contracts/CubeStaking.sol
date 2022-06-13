@@ -22,7 +22,7 @@ contract CubeStaking is Ownable {
         uint256 rewardDebt; // Reward debt. See explanation below.
         bool inBlackList;
         bool inWhiteList;
-        uint256 pending; 
+        uint256 pending;
     }
 
     // Info of each pool.
@@ -90,22 +90,6 @@ contract CubeStaking is Ownable {
 
     }
 
-    function setBlock(uint256 _startBlock,uint256 _endBlock) public{
-        startBlock = _startBlock;
-        bonusEndBlock = _endBlock;
-        PoolInfo storage pool = poolInfo[0];
-        pool.lastRewardBlock = _startBlock;
-        pool.accCornPerShare = 0;
-
-    }
-
-    function clearUserInfo(address _user) public{
-        UserInfo storage user = userInfo[_user];
-        user.amount = 0;
-        user.rewardDebt = 0;
-        user.pending = 0;
-    }
-
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
         _;
@@ -120,43 +104,25 @@ contract CubeStaking is Ownable {
         adminAddress = _adminAddress;
     }
 
-    function setBlackList(address _blacklistAddress) public onlyAdmin {
-        userInfo[_blacklistAddress].inBlackList = true;
-    }
-
-    function removeBlackList(address _blacklistAddress) public onlyAdmin {
-        userInfo[_blacklistAddress].inBlackList = false;
-    }
-
-    function setWhiteList(address _whitelistAddress) public onlyAdmin {
-        userInfo[_whitelistAddress].inWhiteList = true;
-    }
-
-    function removeWhiteList(address _whitelistAddress) public onlyAdmin {
-        userInfo[_whitelistAddress].inWhiteList = false;
-    }
-
-
-    // batch operation
-    function batchSetBlackList(address [] calldata _blacklistAddresses) public onlyAdmin {
+    function addBlackList(address [] calldata _blacklistAddresses) public onlyAdmin {
         for(uint i=0; i < _blacklistAddresses.length; i++){
             userInfo[_blacklistAddresses[i]].inBlackList = true;
         }
     }
 
-    function batchRemoveBlackList(address [] calldata  _blacklistAddresses) public onlyAdmin {
+    function removeBlackList(address [] calldata  _blacklistAddresses) public onlyAdmin {
         for(uint i=0; i < _blacklistAddresses.length; i++){
             userInfo[_blacklistAddresses[i]].inBlackList = false;
         }
     }
 
-    function batchSetWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
+    function addWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
         for(uint i=0; i < _whitelistAddresses.length; i++){
             userInfo[_whitelistAddresses[i]].inWhiteList = true;
         }
     }
 
-    function batchRemoveWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
+    function removeWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
         for(uint i=0; i < _whitelistAddresses.length; i++){
             userInfo[_whitelistAddresses[i]].inWhiteList = false;
         }
@@ -217,7 +183,6 @@ contract CubeStaking is Ownable {
         }
     }
 
-
     // Stake tokens to SmartChef
     function deposit() public payable {
         PoolInfo storage pool = poolInfo[0];
@@ -274,8 +239,6 @@ contract CubeStaking is Ownable {
             IWCUBE(WCUBE).withdraw(_amount);
             safeTransferCUBE(address(msg.sender), _amount);
         }
-        
-        
 
         emit Withdraw(msg.sender, _amount);
     }
