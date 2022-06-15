@@ -52,9 +52,34 @@ contract IFOPool is IIFOPool{
         uint256 amount;     // How many LP tokens the user has provided.
     }
 
-    mapping (address => UserInfo) public userInfo;
+    mapping (address => UserInfo) public _userInfo;
 
     EnumerableSet.AddressSet users;
+/*
+    event Init(
+    	uint _pid,
+		address _initiator,
+		address _sellToken,
+		uint _sellAmount,
+		address _raiseToken, 
+		uint _raiseAmount,
+		uint _startTimestamp,
+		uint _endTimestamp,
+		stakePeriod _period,
+		string _metaData // json string 
+	);
+*/
+
+	//event Verify(bool verified);
+	event Deposit(address user,uint amount);
+	event Quit(address user,uint amount);
+	//event Claim(address user,uint reward,uint refund);
+	//event Settled(uint raiseAmount,uint raiseTotal);
+	//event InitLP(uint amountA, uint amountB, uint liquidity);
+	//event RebalanceBuy(uint treasureAmount, uint boughtAmount);
+	//event RebalanceSell(uint sellAmount, uint treasureAmount);
+	//event UnlockLP(address user,uint lpAmount);
+	//event ClaimTreasure(uint tokenAmount,uint treasureAmount);
 
 	modifier onlyFactory{
 		require(msg.sender == factory,'only factory');
@@ -84,6 +109,8 @@ contract IFOPool is IIFOPool{
 		stakePeriod _period,
 		string memory _metaData // json string 
 	) override external onlyFactory{
+		require(!inited,'inited');
+
 		pid = _pid;
 		initiator = _initiator;
 		sellToken = _sellToken;
@@ -95,6 +122,20 @@ contract IFOPool is IIFOPool{
 		period = _period;
 		metaData = _metaData;
 		inited = true;
+/*
+		emit Init(
+	    	_pid,
+			_initiator,
+			_sellToken,
+			_sellAmount,
+			_raiseToken, 
+			_raiseAmount,
+			_startTimestamp,
+			_endTimestamp,
+			_period,
+			_metaData // json string 
+		);
+*/
 	}
 
 	receive() external payable {
@@ -112,8 +153,11 @@ contract IFOPool is IIFOPool{
 		uint _endTimestamp,
 		stakePeriod _period,
 		string memory _metaData, // json string 
-		uint256 _userCount
+		uint256 _userCount,
+		uint256 _raiseTotal
 	){
+		uint256 raiseBalance = IERC20(raiseToken).balanceOf(address(this));
+		_raiseTotal = raiseBalance > raiseTotal ? raiseBalance : raiseTotal;
 		return (
 			verified,
 			initiator,
@@ -125,18 +169,24 @@ contract IFOPool is IIFOPool{
 			endTimestamp,
 			period,
 			metaData,
-			users.length()
+			users.length(),
+			_raiseTotal
 		);
 	}
 
 	function verify(bool _verified) override external onlyFactory{
 		verified = _verified;
+		//emit Verify(verified);
+	}
+
+	function userInfo(address user) override external view returns(uint256 amount){
+		return _userInfo[user].amount;
 	}
 
 	function deposit() override external payable qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = userInfo[msg.sender];
+		UserInfo storage user = _userInfo[msg.sender];
 
 		if(msg.value > 0){
 			IWCUBE(WCUBE).deposit{value: msg.value}();
@@ -149,16 +199,16 @@ contract IFOPool is IIFOPool{
 
 	        IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
+
+	        emit Deposit(msg.sender,amount);
         }
-
-
 
 	}
 
 	function deposit(uint256 amount) override external qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = userInfo[msg.sender];
+		UserInfo storage user = _userInfo[msg.sender];
 		if(amount > 0){
 			IERC20(raiseToken).safeTransferFrom(address(msg.sender), address(this), amount);
 
@@ -169,6 +219,8 @@ contract IFOPool is IIFOPool{
 
 			IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
+
+	        emit Deposit(msg.sender,amount);
 		}
 
 	}
@@ -176,7 +228,7 @@ contract IFOPool is IIFOPool{
 	function quit(uint256 amount) override external qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = userInfo[msg.sender];
+		UserInfo storage user = _userInfo[msg.sender];
 		require(amount <= user.amount,'not enough amount');
 
 		if(amount == 0){
@@ -200,6 +252,8 @@ contract IFOPool is IIFOPool{
 	        users.remove(msg.sender);
 		}
 
+		emit Quit(msg.sender,amount);
+
 	}
 
 	function calculateFee(uint amount) internal returns(uint fee){
@@ -218,7 +272,7 @@ contract IFOPool is IIFOPool{
 			initlp();
 			refundGas();
 		}
-		UserInfo storage user = userInfo[msg.sender];
+		UserInfo storage user = _userInfo[msg.sender];
 
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
 
@@ -234,6 +288,8 @@ contract IFOPool is IIFOPool{
 				IERC20(raiseToken).transfer(msg.sender, refund);
 			}
 		}
+
+		//emit Claim(msg.sender,reward,refund);
 	}
 
 	function settle() internal{
@@ -254,6 +310,8 @@ contract IFOPool is IIFOPool{
 			treasure = raiseTotal > topLimit ? topLimit.sub(raiseAmount) : raiseTotal.sub(raiseAmount);
 		}
 
+		//emit Settled(raiseAmount,raiseTotal);
+
 	}
 
 	function initlp() internal{
@@ -262,7 +320,10 @@ contract IFOPool is IIFOPool{
 
 		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
 		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
+		//(uint amountA, uint amountB, uint liquidity) = 
 		ICapswapV2Router02(swapRouter).addLiquidity(raiseToken, sellToken,lpTokenAmountA,lpTokenAmountB,0,0,address(this),block.timestamp+60);
+
+		//emit InitLP(amountA,amountB,liquidity);
 	}
 
 	function refundGas() internal{
@@ -292,7 +353,7 @@ contract IFOPool is IIFOPool{
 		else{
 			_raiseTotal = raiseTotal;
 		}
-		UserInfo storage user = userInfo[_user];
+		UserInfo storage user = _userInfo[_user];
 		(reward,refund) = consult(user.amount,_raiseTotal);
 	}
 
@@ -316,6 +377,8 @@ contract IFOPool is IIFOPool{
 
 				IERC20(raiseToken).transfer(lpPair,validTreasure);
 				ICapswapV2Pair(lpPair).swap(amount0Out, amount1Out, address(this), new bytes(0));
+
+				//emit RebalanceBuy(validTreasure,amountOut);
 			}
 		}
 		if(raise > raiseAmount.mul(15).div(10)){
@@ -331,11 +394,14 @@ contract IFOPool is IIFOPool{
 
 				IERC20(sellToken).transfer(lpPair,validSellTokenAmount);
 				ICapswapV2Pair(lpPair).swap(amount0Out, amount1Out, address(this), new bytes(0));
+
+				//emit RebalanceSell(validSellTokenAmount,amountOut);
 			}
 		}
 	}
 
 	// for initiator
+
 	function unlockLiquidity() override external{
 		require(msg.sender == initiator,'only initiator');
 		require(block.timestamp > endTimestamp.add(ONE_MONTH_TIME.mul(uint(period)+1)),'unlock later');
@@ -344,7 +410,38 @@ contract IFOPool is IIFOPool{
 		address lpToken = CapswapV2Library.pairFor(swapFactory,sellToken, raiseToken);
 		uint256 lpBalance = IERC20(lpToken).balanceOf(address(this));
 		IERC20(lpToken).transfer(initiator,lpBalance);
+
+		//emit UnlockLP(initiator,lpBalance);
 	}
+
+	function treasurePending() override external view returns(uint256 sellTokenAmount, uint256 raiseTokenAmount){
+		if(settled){
+			sellTokenAmount = IERC20(sellToken).balanceOf(address(this));
+			raiseTokenAmount = treasure;
+		}
+
+	}
+ 	function claimTreasure() override external{
+ 		require(msg.sender == initiator,'only initiator');
+		require(block.timestamp > endTimestamp.add(ONE_MONTH_TIME.mul(uint(period)+1)),'unlock later');
+
+		uint sellTokenAmount = IERC20(sellToken).balanceOf(address(this));
+		if(sellTokenAmount > 0){
+			IERC20(sellToken).transfer(msg.sender,sellTokenAmount);
+		}
+		if(treasure > 0){
+			if(raiseToken == WCUBE){
+				IWCUBE(WCUBE).withdraw(treasure);
+	        	safeTransferCUBE(address(msg.sender), treasure);
+			}
+			else{
+				IERC20(raiseToken).transfer(msg.sender, treasure);
+			}
+		}
+
+		//emit ClaimTreasure(sellTokenAmount,treasure);
+
+ 	}
 
 	function safeTransferCUBE(address to, uint256 value) internal {
         (bool success, ) = to.call{gas: 23000, value: value}("");

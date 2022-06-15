@@ -10,4 +10,6 @@ interface IValidator{
 	function qualified(address user) external view returns (bool);
 
 	function info() external view returns (string memory);
+
+	function vote(address user) external view returns (uint user_value);
 }

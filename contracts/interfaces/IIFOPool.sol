@@ -37,10 +37,13 @@ interface IIFOPool {
 		uint _endTimestamp,
 		stakePeriod _period,
 		string memory _metaData, // json string 
-		uint256 _userCount
+		uint256 _userCount,
+		uint256 _raiseTotal
 	);
 
 	function verify(bool _verified) external;
+
+	function userInfo(address user) external returns(uint256 amount);
 
 	// for user
 	function deposit() external payable;
@@ -53,5 +56,7 @@ interface IIFOPool {
 
 	// for initiator
 	function unlockLiquidity() external;
+	function treasurePending() external view returns(uint256 sellTokenAmount, uint256 raiseTokenAmount);
+ 	function claimTreasure() external;
 
 }

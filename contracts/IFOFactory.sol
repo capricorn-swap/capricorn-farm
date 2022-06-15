@@ -35,6 +35,25 @@ contract IFOFactory is IIFOFactory,Ownable{
 	mapping(address => EnumerableSet.UintSet) crops;
 	EnumerableSet.UintSet verified;
 
+	event CreatePoolEvent(address sellToken,
+		uint sellAmount,
+		address raiseToken, 
+		uint raiseAmount,
+		uint startTimestamp,
+		uint endTimestamp,
+		stakePeriod period,
+		string metaData);
+
+	event NewValidatorEvent(address validator);
+	event NewFeeToEvent(address feeTo);
+	event NewExcessRate(uint256 rate);
+	event NewOpenfeeToken(address token);
+	event NewOpenfeeAmount(uint256 amount);
+	event NewFeeRate(uint256 rate);
+	event Verify(uint256 pid, address pool, bool verified);
+	event Enter(uint256 pid, address pool, address user);
+	event Quit(uint256 pid, address pool, address user);
+
 	constructor(address _wcube, address _swapRouter,address _validator) {
         WCUBE = _wcube;
         swapRouter = _swapRouter;
@@ -93,7 +112,18 @@ contract IFOFactory is IIFOFactory,Ownable{
 			period:period,
 			metaData:metaData
 		}));
+
 		seeds[msg.sender].add(pid);
+
+		emit CreatePoolEvent(sellToken,
+			sellAmount,
+			raiseToken, 
+			raiseAmount,
+			startTimestamp,
+			endTimestamp,
+			period,
+			metaData);
+			
 	}
 
     function poolsLength() override external  view returns(uint256){
@@ -102,26 +132,32 @@ contract IFOFactory is IIFOFactory,Ownable{
 
     function setValidator(address _validator) external onlyOwner{
 		validator = _validator;
+		emit NewValidatorEvent(validator);
 	}
 
 	function setFeeTo(address _feeTo) external onlyOwner{
 		feeTo = _feeTo;
+		emit NewFeeToEvent(feeTo);
 	}
 
 	function setExcessRate(uint256 _rate) external  onlyOwner{ // x/100
 		excessRate = _rate;
+		emit NewExcessRate(excessRate);
 	}
 
 	function setOpenfeeToken(address _token) external onlyOwner{
 		openfeeToken = _token;
+		emit NewOpenfeeToken(openfeeToken);
 	}
 
 	function setOpenfeeAmount(uint256 _amount) external onlyOwner{
 		openfeeAmount = _amount;
+		emit NewOpenfeeAmount(openfeeAmount);
 
 	}
 	function setIfoFeeRate(uint256 _rate) external onlyOwner{ // x/10000
 		ifoFeeRate = _rate;
+		emit NewFeeRate(ifoFeeRate);
 	}
 
 	function mySeeds(address user) override external view returns(PoolInfo [] memory _pools){
@@ -168,16 +204,18 @@ contract IFOFactory is IIFOFactory,Ownable{
 		else{
 			verified.remove(pid);
 		}
+		emit Verify(pid,pool,_verified);
 	}
 
 	function enter(uint256 pid,address user) override external{
 		require(pools[pid].pool_address == msg.sender,'invalid address');
 		crops[user].add(pid);
-
+		emit Enter(pid,msg.sender,user);
 	}
 	function quit(uint256 pid,address user) override external{
 		require(pools[pid].pool_address == msg.sender,'invalid address');
 		crops[user].remove(pid);
+		emit Quit(pid,msg.sender,user);
 	}
 	
 }
