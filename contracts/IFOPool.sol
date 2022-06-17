@@ -156,8 +156,6 @@ contract IFOPool is IIFOPool{
 		uint256 _userCount,
 		uint256 _raiseTotal
 	){
-		uint256 raiseBalance = IERC20(raiseToken).balanceOf(address(this));
-		_raiseTotal = raiseBalance > raiseTotal ? raiseBalance : raiseTotal;
 		return (
 			verified,
 			initiator,
@@ -170,7 +168,7 @@ contract IFOPool is IIFOPool{
 			period,
 			metaData,
 			users.length(),
-			_raiseTotal
+			raiseTotal
 		);
 	}
 
@@ -183,7 +181,7 @@ contract IFOPool is IIFOPool{
 		return _userInfo[user].amount;
 	}
 
-	function deposit() override external payable qualified{
+	function depositCUBE() override external payable qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
 		UserInfo storage user = _userInfo[msg.sender];
@@ -196,6 +194,7 @@ contract IFOPool is IIFOPool{
 			uint amount = msg.value.sub(fee);
 
 	        user.amount = user.amount.add(amount);
+	        raiseTotal = raiseTotal.add(amount);
 
 	        IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
@@ -216,6 +215,7 @@ contract IFOPool is IIFOPool{
 			amount = amount.sub(fee);
 
 			user.amount = user.amount.add(amount);
+			raiseTotal = raiseTotal.add(amount);
 
 			IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
@@ -236,6 +236,7 @@ contract IFOPool is IIFOPool{
 		}
 
 		user.amount = user.amount.sub(amount);
+		raiseTotal = raiseTotal.sub(amount);
 		uint fee = calculateFee(amount);
 
 		amount = amount.sub(fee);
@@ -295,7 +296,7 @@ contract IFOPool is IIFOPool{
 	function settle() internal{
 		uint excessRate = IIFOFactory(factory).excessRate();
 		uint topLimit = raiseAmount.mul(100+excessRate).div(100);
-		raiseTotal = IERC20(raiseToken).balanceOf(address(this));
+
 		if (raiseTotal < raiseAmount){
 			lpTokenAmountA = raiseTotal;
 			lpTokenAmountB = sellAmount.mul(raiseTotal).div(raiseAmount);
@@ -346,15 +347,8 @@ contract IFOPool is IIFOPool{
 	}
 
 	function pending(address _user) override external view returns (uint reward,uint refund){
-		uint _raiseTotal;
-		if(!settled){
-		 	_raiseTotal = IERC20(raiseToken).balanceOf(address(this));
-		}
-		else{
-			_raiseTotal = raiseTotal;
-		}
 		UserInfo storage user = _userInfo[_user];
-		(reward,refund) = consult(user.amount,_raiseTotal);
+		(reward,refund) = consult(user.amount,raiseTotal);
 	}
 
 	function rebalance() override external{

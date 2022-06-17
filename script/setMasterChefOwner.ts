@@ -25,15 +25,29 @@ async function main() {
   const signer_addr = '0x2c76fe561cce48b50c4f918ab0affe940d57bfeb';
   //*/
 
-  //* // public test
+  /* // public test
   const masterchef_addr = '0x6273638e3Be5770851E23bfcE27d69592BEDCd2c';
   const smartcheffactory_addr = '0x25070baCb0c3CcB2Db44d54dD02f5dB50024204d';
 
   const signer_addr = '0x2fd6cf4118cffabd8b7163651fecba6517c81e5f';
   //*/
   
+  //* // cube-mainnet 
+  const masterchef_addr = '0x441e22e8cC8c3cfa14086a78ED130e1841307860';
+  const smartcheffactory_addr = '0x6a3377CCE45601c593457267683B5AA3a9070812';
+
+  const signer_addr = '0x55f254ee842a890e3f54a8c5f80d63f3e3f2fa8f';
+  //*/
+  
   const MasterChef= await ethers.getContractFactory("MasterChef");
   const masterchef= await MasterChef.attach(masterchef_addr);
+
+  //updateMultiplier(uint256 multiplierNumber)
+  const updateMultiplier = await masterchef.updateMultiplier(15000);
+  await updateMultiplier.wait();
+  const BONUS_MULTIPLIER = await masterchef.BONUS_MULTIPLIER();
+  console.log("set BONUS_MULTIPLIER",BONUS_MULTIPLIER);
+
   const setMasterChefOwner = await masterchef.transferOwnership(signer_addr);
   await setMasterChefOwner.wait();
   const masterChefOwner = await masterchef.owner();

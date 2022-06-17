@@ -28,10 +28,10 @@ async function main() {
   //*/
 
   // cube-mainnet
-  //const masterchef_addr = '';
-  //const vestingMaster_addr = '';
+  const masterchef_addr = '0x441e22e8cC8c3cfa14086a78ED130e1841307860';
+  const vestingMaster_addr = '0x8437C0319DA9E750Fcfe2aCEfbDc39bc667D9861';
 
-  //*/ public test 
+  /*/ cube-mainnet test 
   const masterchef_addr = '0x2125fc82ac71b640B7F680F89F0A5ee8D5372D8C';
   const vestingMaster_addr = '0xF6e501eAfb16B62c316d01e797A8105005721324';
   //*/

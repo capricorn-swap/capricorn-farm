@@ -18,6 +18,7 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+
   const CapricornToken= await ethers.getContractFactory("CapricornToken");
   const CORN = await CapricornToken.deploy();
   await CORN.deployed();
@@ -29,54 +30,53 @@ async function main() {
   console.log("SyrupBar deployed to:", syrup.address);
 
   const CORNPerBlock = "45000000000000000000";
-  const startBlock = 570000;
+  const startBlock = 436315;
+  const devaddr = '0xf263720272cd382b43abf6ab73f09cf18e1372cd';
   const MasterChef= await ethers.getContractFactory("MasterChef");
-  const masterchef= await MasterChef.deploy(CORN.address,syrup.address,deployer.address,CORNPerBlock,startBlock);
+  const masterchef= await MasterChef.deploy(CORN.address,syrup.address,devaddr,CORNPerBlock,startBlock);
   await masterchef.deployed();
   console.log("MasterChef deployed to:", masterchef.address);
 
-/*
-  const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
-  const rewardToken = CORN.address;
-  const rewardPerBlock = "45000000000000000000";
-  const startBlock = 200000;
-  const endBlock = 400000;
-  const admin = deployer.address;
-  const CubeStaking= await ethers.getContractFactory("CubeStaking");
-  const cubeStaking= await CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin,wcube);
-  await cubeStaking.deployed();
-  console.log("deploy cubeStaking",cubeStaking.address);
-*/
 
   const SmartChefFactory= await ethers.getContractFactory("SmartChefFactory");
   const smartcheffactory= await SmartChefFactory.deploy();
   await smartcheffactory.deployed();
   console.log("SmartChefFactory deployed to:", smartcheffactory.address);
 
-  
-/*
-  const masterchef_addr = '0x4C9e77C722693F119Fda85D8Ff5e4b9E64258AbC';
 
-  const CapricornToken= await ethers.getContractFactory("CapricornToken");
-  const CORN_addr = '0x9020d0EF9A973319163Ee0C8b9580813b8c459f5';
-  const CORN = CapricornToken.attach(CORN_addr);
-
-  const SyrupBar= await ethers.getContractFactory("SyrupBar");
-  const syrup_addr = '0xc06383f846537271843E2dFc8F1f96a6798F415D';
-  const syrup = SyrupBar.attach(syrup_addr);
-*/
-  const mintAmount = "50000000000000000000000000"
-  const firstMint= await CORN.mint(deployer.address,mintAmount);
+  const add1 = "0x11B17722F0E877Aa5B4CbEDCC448aD5CC97E8268";
+  const mintAmount1 = "20000000000000000000000000";
+  const firstMint1= await CORN.mint(add1,mintAmount1);
   // wait until the transaction is mined
-  await firstMint.wait();
-  console.log("firstMint:",await CORN.balanceOf(deployer.address));
-  
+  await firstMint1.wait();
+  console.log("Mint:",await CORN.balanceOf(add1));
+
+  const add2 = "0xfdE3ee0f427AD75A5a057F26Ab87E051BE44F6Ef";
+  const mintAmount2 = "2000000000000000000000000";
+  const firstMint2= await CORN.mint(add2,mintAmount2);
+  // wait until the transaction is mined
+  await firstMint2.wait();
+  console.log("Mint:",await CORN.balanceOf(add2));
+
+  const add3 = "0x3B024d206358aA2c6794219Eed418f5f903F567C";
+  const mintAmount3 = "3000000000000000000000000";
+  const firstMint3= await CORN.mint(add3,mintAmount3);
+  // wait until the transaction is mined
+  await firstMint3.wait();
+  console.log("Mint:",await CORN.balanceOf(add3));
+
+  const add4 = "0xCaaD0A0840ed34D138d9961b3903185064F13BbE";
+  const mintAmount4 = "25000000000000000000000000";
+  const firstMint4= await CORN.mint(add4,mintAmount4);
+  // wait until the transaction is mined
+  await firstMint4.wait();
+  console.log("Mint:",await CORN.balanceOf(add4));
 
 
   const setCornOwner = await CORN.transferOwnership(masterchef.address);
   // wait until the transaction is mined
   await setCornOwner.wait();
-  console.log("set CPCT owner:",await CORN.owner());
+  console.log("set Corn owner:",await CORN.owner());
 
   const setSyrupBarOwner = await syrup.transferOwnership(masterchef.address);
   // wait until the transaction is mined

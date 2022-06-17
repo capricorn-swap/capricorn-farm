@@ -21,6 +21,7 @@ interface IIFOFactory {
 		uint endTimestamp;
 		stakePeriod period;
 		string metaData; // json string {"siteURL": "http://xxx","reportURL": "http://xxx"}
+		uint userCount;
 	}
 
 	function poolsLength() external  view returns(uint256);
