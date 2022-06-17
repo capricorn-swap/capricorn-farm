@@ -50,9 +50,11 @@ contract IFOPool is IIFOPool{
 	// Info of each user.
     struct UserInfo {
         uint256 amount;     // How many LP tokens the user has provided.
+        bool claimed;
+        bool participated;
     }
 
-    mapping (address => UserInfo) public _userInfo;
+    mapping (address => UserInfo) public userInfo;
 
     EnumerableSet.AddressSet users;
 /*
@@ -177,14 +179,10 @@ contract IFOPool is IIFOPool{
 		//emit Verify(verified);
 	}
 
-	function userInfo(address user) override external view returns(uint256 amount){
-		return _userInfo[user].amount;
-	}
-
 	function depositCUBE() override external payable qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = _userInfo[msg.sender];
+		UserInfo storage user = userInfo[msg.sender];
 
 		if(msg.value > 0){
 			IWCUBE(WCUBE).deposit{value: msg.value}();
@@ -198,6 +196,7 @@ contract IFOPool is IIFOPool{
 
 	        IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
+	        user.participated = true;
 
 	        emit Deposit(msg.sender,amount);
         }
@@ -207,7 +206,7 @@ contract IFOPool is IIFOPool{
 	function deposit(uint256 amount) override external qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = _userInfo[msg.sender];
+		UserInfo storage user = userInfo[msg.sender];
 		if(amount > 0){
 			IERC20(raiseToken).safeTransferFrom(address(msg.sender), address(this), amount);
 
@@ -219,6 +218,7 @@ contract IFOPool is IIFOPool{
 
 			IIFOFactory(factory).enter(pid,msg.sender);
 	        users.add(msg.sender);
+	        user.participated = true;
 
 	        emit Deposit(msg.sender,amount);
 		}
@@ -228,7 +228,7 @@ contract IFOPool is IIFOPool{
 	function quit(uint256 amount) override external qualified{
 		require(block.timestamp < endTimestamp,'time end');
 
-		UserInfo storage user = _userInfo[msg.sender];
+		UserInfo storage user = userInfo[msg.sender];
 		require(amount <= user.amount,'not enough amount');
 
 		if(amount == 0){
@@ -251,6 +251,7 @@ contract IFOPool is IIFOPool{
 		if(user.amount == 0){
 			IIFOFactory(factory).quit(pid,msg.sender);
 	        users.remove(msg.sender);
+	        user.participated = false;
 		}
 
 		emit Quit(msg.sender,amount);
@@ -267,13 +268,17 @@ contract IFOPool is IIFOPool{
 
 	function claim() override external{
 		require(block.timestamp > endTimestamp,'can not claim');
+		
+		UserInfo storage user = userInfo[msg.sender];
+		require(!user.claimed,'claimed');
+		user.claimed = true;
+
 		if(!settled){
 			settled = true;
 			settle();
 			initlp();
 			refundGas();
 		}
-		UserInfo storage user = _userInfo[msg.sender];
 
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
 
@@ -347,7 +352,7 @@ contract IFOPool is IIFOPool{
 	}
 
 	function pending(address _user) override external view returns (uint reward,uint refund){
-		UserInfo storage user = _userInfo[_user];
+		UserInfo storage user = userInfo[_user];
 		(reward,refund) = consult(user.amount,raiseTotal);
 	}
 

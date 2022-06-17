@@ -20,7 +20,6 @@ contract CubeStaking is Ownable {
     struct UserInfo {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
-        bool inBlackList;
         bool inWhiteList;
         uint256 pending;
     }
@@ -104,18 +103,6 @@ contract CubeStaking is Ownable {
         adminAddress = _adminAddress;
     }
 
-    function addBlackList(address [] calldata _blacklistAddresses) public onlyAdmin {
-        for(uint i=0; i < _blacklistAddresses.length; i++){
-            userInfo[_blacklistAddresses[i]].inBlackList = true;
-        }
-    }
-
-    function removeBlackList(address [] calldata  _blacklistAddresses) public onlyAdmin {
-        for(uint i=0; i < _blacklistAddresses.length; i++){
-            userInfo[_blacklistAddresses[i]].inBlackList = false;
-        }
-    }
-
     function addWhiteList(address [] calldata _whitelistAddresses) public onlyAdmin {
         for(uint i=0; i < _whitelistAddresses.length; i++){
             userInfo[_whitelistAddresses[i]].inWhiteList = true;
@@ -190,7 +177,6 @@ contract CubeStaking is Ownable {
 
         require (block.number < bonusEndBlock,'finished');
         require (user.amount.add(msg.value) <= limitAmount, 'exceed the top');
-        require (!user.inBlackList, 'in black list');
         require (user.inWhiteList, 'not in white list');
 
         updatePool(0);
@@ -254,10 +240,11 @@ contract CubeStaking is Ownable {
         user.pending = 0;
     }
 
-    // Withdraw reward. EMERGENCY ONLY.
-    function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), 'not enough token');
-        rewardToken.safeTransfer(address(msg.sender), _amount);
+    // Withdraw token. EMERGENCY ONLY.
+    function emergencyTokenWithdraw(address token, uint256 _amount) public onlyOwner {
+        require(token != WCUBE);
+        require(_amount <= IERC20(token).balanceOf(address(this)), 'not enough token');
+        IERC20(token).safeTransfer(address(msg.sender), _amount);
     }
 
 }

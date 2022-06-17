@@ -43,8 +43,6 @@ interface IIFOPool {
 
 	function verify(bool _verified) external;
 
-	function userInfo(address user) external returns(uint256 amount);
-
 	// for user
 	function depositCUBE() external payable;
 	function deposit(uint256 amount) external;
