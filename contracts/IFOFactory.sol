@@ -16,7 +16,9 @@ contract IFOFactory is IIFOFactory,Ownable{
 	using EnumerableSet for EnumerableSet.UintSet;
 	using SafeMath for uint256;
 
+	uint256 public MIN_TIME = 600;
 	uint256 public MAX_TIME = 3600*24*14;
+	uint256 public MIN_PERIOD = 0;
 	address public override WCUBE;
 	address public override validator;
 
@@ -41,7 +43,7 @@ contract IFOFactory is IIFOFactory,Ownable{
 		uint raiseAmount,
 		uint startTimestamp,
 		uint endTimestamp,
-		stakePeriod period,
+		uint period,
 		string metaData);
 
 	//event NewValidatorEvent(address validator);
@@ -68,13 +70,18 @@ contract IFOFactory is IIFOFactory,Ownable{
 		uint raiseAmount,
 		uint startTimestamp,
 		uint endTimestamp,
-		stakePeriod period,
+		uint period,
 		string memory metaData // json string 
 		) override external returns(address pool){
 
 		require(sellToken != raiseToken,'same token');
-		require(block.timestamp <= startTimestamp,'wrong startTimestamp');
-		require(endTimestamp > startTimestamp && endTimestamp - MAX_TIME < startTimestamp,'wrong endTimestamp');
+        if(startTimestamp < block.timestamp){
+            startTimestamp = block.timestamp;
+        }
+        require(endTimestamp.sub(startTimestamp) > MIN_TIME,'time too short');
+        require(endTimestamp.sub(startTimestamp) < MAX_TIME,'time too long');
+        require(period >= MIN_PERIOD,'too short period');
+
 		{
 			bytes memory bytecode = type(IFOPool).creationCode;
 	        bytes32 salt = keccak256(abi.encodePacked(sellToken, raiseToken, startTimestamp, endTimestamp));

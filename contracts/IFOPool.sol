@@ -23,8 +23,9 @@ contract IFOPool is IIFOPool{
 
 	bool inited = false;
 	bool settled = false;
+	bool lpadded = false;
 	uint256 public raiseTotal;
-	uint256 ONE_MONTH_TIME = 3600*24*30;
+	uint256 ONE_DAY = 3600*24;
 	address public factory;
 	address public WCUBE;
 
@@ -33,7 +34,8 @@ contract IFOPool is IIFOPool{
 
 	uint public refundSell;
 
-	uint public treasure;
+	uint public treasureMoney;
+	uint public treasureToken;
 
 	uint256 public pid;
 	address public initiator;
@@ -44,7 +46,7 @@ contract IFOPool is IIFOPool{
 	uint 	public raiseAmount;
 	uint 	public startTimestamp;
 	uint 	public endTimestamp;
-	stakePeriod public period;
+	uint    public period;
 	string 	public metaData; // json string 
 
 	// Info of each user.
@@ -67,7 +69,7 @@ contract IFOPool is IIFOPool{
 		uint _raiseAmount,
 		uint _startTimestamp,
 		uint _endTimestamp,
-		stakePeriod _period,
+		uint _period,
 		string _metaData // json string 
 	);
 */
@@ -108,7 +110,7 @@ contract IFOPool is IIFOPool{
 		uint _raiseAmount,
 		uint _startTimestamp,
 		uint _endTimestamp,
-		stakePeriod _period,
+		uint _period,
 		string memory _metaData // json string 
 	) override external onlyFactory{
 		require(!inited,'inited');
@@ -153,7 +155,7 @@ contract IFOPool is IIFOPool{
 		uint _raiseAmount,
 		uint _startTimestamp,
 		uint _endTimestamp,
-		stakePeriod _period,
+		uint _period,
 		string memory _metaData, // json string 
 		uint256 _userCount,
 		uint256 _raiseTotal
@@ -268,16 +270,16 @@ contract IFOPool is IIFOPool{
 
 	function claim() override external{
 		require(block.timestamp > endTimestamp,'can not claim');
-		
+
 		UserInfo storage user = userInfo[msg.sender];
 		require(!user.claimed,'claimed');
 		user.claimed = true;
 
 		if(!settled){
-			settled = true;
 			settle();
+		}
+		if(!lpadded){
 			initlp();
-			refundGas();
 		}
 
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
@@ -313,8 +315,10 @@ contract IFOPool is IIFOPool{
 			lpTokenAmountA = raiseAmount;
 			lpTokenAmountB = sellAmount;
 			
-			treasure = raiseTotal > topLimit ? topLimit.sub(raiseAmount) : raiseTotal.sub(raiseAmount);
+			treasureMoney = raiseTotal > topLimit ? topLimit.sub(raiseAmount) : raiseTotal.sub(raiseAmount);
+			treasureToken = raiseTotal > topLimit ? sellAmount.mul(excessRate).div(100) : sellAmount.mul(topLimit.sub(raiseTotal)).div(raiseAmount);
 		}
+		settled = true;
 
 		//emit Settled(raiseAmount,raiseTotal);
 
@@ -326,8 +330,19 @@ contract IFOPool is IIFOPool{
 
 		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
 		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
-		//(uint amountA, uint amountB, uint liquidity) = 
-		ICapswapV2Router02(swapRouter).addLiquidity(raiseToken, sellToken,lpTokenAmountA,lpTokenAmountB,0,0,address(this),block.timestamp+60);
+
+		bytes4 SELECTOR = bytes4(keccak256(bytes('addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)')));
+
+		(bool success, bytes memory data) = swapRouter.call(abi.encodeWithSelector(SELECTOR, raiseToken, sellToken,lpTokenAmountA,lpTokenAmountB,lpTokenAmountA.mul(97).div(100),lpTokenAmountB.mul(97).div(100),address(this),block.timestamp+60));
+
+		if(success){
+			lpadded = true;
+			(uint amountA, uint amountB, /*uint liquidity*/) 
+				= abi.decode(data, (uint,uint,uint));
+			treasureMoney = treasureMoney.add(lpTokenAmountA.sub(amountA));
+			treasureToken = treasureToken.add(lpTokenAmountB.sub(amountB));
+			refundGas();
+		}
 
 		//emit InitLP(amountA,amountB,liquidity);
 	}
@@ -364,12 +379,14 @@ contract IFOPool is IIFOPool{
 
 		uint raise = CapswapV2Library.quote(sellAmount,reserveSell,reserveRaise);
 		if(raise < raiseAmount.mul(8).div(10)){
-			// buy sellToken user treasure
-			uint validTreasure = treasure.div(10);
+			// buy sellToken use treasure
+			uint validTreasure = treasureMoney.div(10);
 			if(validTreasure > 0){
-				treasure = treasure.sub(validTreasure);
 
 				uint amountOut = CapswapV2Library.getAmountOut(validTreasure,reserveRaise,reserveSell);
+
+				treasureMoney = treasureMoney.sub(validTreasure);
+				treasureToken = treasureToken.add(amountOut);
 
 				(address token0,) = CapswapV2Library.sortTokens(raiseToken, sellToken);
 				(uint amount0Out, uint amount1Out) = raiseToken == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
@@ -382,11 +399,12 @@ contract IFOPool is IIFOPool{
 		}
 		if(raise > raiseAmount.mul(15).div(10)){
 			// sell sellToken to treasure
-			uint validSellTokenAmount = IERC20(sellToken).balanceOf(address(this)).div(10);
+			uint validSellTokenAmount = treasureToken.div(10);
 			if(validSellTokenAmount > 0){
 				uint amountOut = CapswapV2Library.getAmountOut(validSellTokenAmount,reserveSell,reserveRaise);
 
-				treasure = treasure.add(amountOut);
+				treasureToken = treasureToken.sub(validSellTokenAmount);
+				treasureMoney = treasureMoney.add(amountOut);
 
 				(address token0,) = CapswapV2Library.sortTokens(raiseToken, sellToken);
 				(uint amount0Out, uint amount1Out) = raiseToken == token0 ? (amountOut, uint(0)) : (uint(0), amountOut);
@@ -403,7 +421,7 @@ contract IFOPool is IIFOPool{
 
 	function unlockLiquidity() override external{
 		require(msg.sender == initiator,'only initiator');
-		require(block.timestamp > endTimestamp.add(ONE_MONTH_TIME.mul(uint(period)+1)),'unlock later');
+		require(block.timestamp > endTimestamp.add(ONE_DAY.mul(period)),'unlock later');
 
 		address swapFactory = IIFOFactory(factory).swapFactory();
 		address lpToken = CapswapV2Library.pairFor(swapFactory,sellToken, raiseToken);
@@ -415,30 +433,29 @@ contract IFOPool is IIFOPool{
 
 	function treasurePending() override external view returns(uint256 sellTokenAmount, uint256 raiseTokenAmount){
 		if(settled){
-			sellTokenAmount = IERC20(sellToken).balanceOf(address(this));
-			raiseTokenAmount = treasure;
+			sellTokenAmount = treasureToken;
+			raiseTokenAmount = treasureMoney;
 		}
 
 	}
  	function claimTreasure() override external{
  		require(msg.sender == initiator,'only initiator');
-		require(block.timestamp > endTimestamp.add(ONE_MONTH_TIME.mul(uint(period)+1)),'unlock later');
+		require(block.timestamp > endTimestamp.add(ONE_DAY.mul(period)),'unlock later');
 
-		uint sellTokenAmount = IERC20(sellToken).balanceOf(address(this));
-		if(sellTokenAmount > 0){
-			IERC20(sellToken).transfer(msg.sender,sellTokenAmount);
+		if(treasureToken > 0){
+			IERC20(sellToken).transfer(msg.sender,treasureToken);
 		}
-		if(treasure > 0){
+		if(treasureMoney > 0){
 			if(raiseToken == WCUBE){
-				IWCUBE(WCUBE).withdraw(treasure);
-	        	safeTransferCUBE(address(msg.sender), treasure);
+				IWCUBE(WCUBE).withdraw(treasureMoney);
+	        	safeTransferCUBE(address(msg.sender), treasureMoney);
 			}
 			else{
-				IERC20(raiseToken).transfer(msg.sender, treasure);
+				IERC20(raiseToken).transfer(msg.sender, treasureMoney);
 			}
 		}
 
-		//emit ClaimTreasure(sellTokenAmount,treasure);
+		//emit ClaimTreasure(treasureToken,treasureMoney);
 
  	}
 

@@ -27,7 +27,7 @@ contract Validator is IValidator{
 	}
 
 	function info() override external pure returns (string memory){
-		return "corn staking value must bigger than 500$";
+		return "CORN staking value must bigger than 500$";
 	}
 
 	function vote(address user) override public view returns (uint user_value){

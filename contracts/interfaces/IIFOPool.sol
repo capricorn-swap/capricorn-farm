@@ -5,11 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-enum stakePeriod {
-		ONE_MONTH,
-		TOW_MONTH,
-		THREE_MONTH
-}
 
 interface IIFOPool {
 
@@ -22,7 +17,7 @@ interface IIFOPool {
 		uint _raiseAmount,
 		uint _startTimestamp,
 		uint _endTimestamp,
-		stakePeriod _period,
+		uint _period,
 		string memory _metaData // json string 
 	) external;
 
@@ -35,7 +30,7 @@ interface IIFOPool {
 		uint _raiseAmount,
 		uint _startTimestamp,
 		uint _endTimestamp,
-		stakePeriod _period,
+		uint _period,
 		string memory _metaData, // json string 
 		uint256 _userCount,
 		uint256 _raiseTotal

@@ -19,7 +19,7 @@ interface IIFOFactory {
 		uint raiseAmount;
 		uint startTimestamp;
 		uint endTimestamp;
-		stakePeriod period;
+		uint period;
 		string metaData; // json string {"siteURL": "http://xxx","reportURL": "http://xxx"}
 		uint userCount;
 	}
@@ -54,7 +54,7 @@ interface IIFOFactory {
 		uint raiseAmount,
 		uint startTimestamp,
 		uint endTimestamp,
-		stakePeriod period,
+		uint period,
 		string memory metaData // json string 
 		) external returns(address pool);
 

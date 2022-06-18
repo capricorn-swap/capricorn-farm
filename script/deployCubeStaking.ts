@@ -18,11 +18,22 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+/*
   const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
   const rewardToken = '0xc4D424aaCC8867f9f79FBCa88181E518e33eF178';
   const rewardPerBlock = "10000000000000000000";
   const startBlock = 790000;
   const endBlock = 1000000;
+*/
+
+//* cube mainnet
+  const wcube = '0x9d3f61338d6eb394e378d28c1fd17d5909ac6591';
+  const rewardToken = '0x6F8A58be5497c82E129B31E1d9B7604ED9b59451';
+  const rewardPerBlock = "694444444444444444444";
+  const startBlock = 400315;
+  const endBlock = 429115;
+  const signer_addr = '0x46d6826f4726afdac40768f14099be774d5a108d';
+//*/
   const admin = deployer.address;
   const CubeStaking= await ethers.getContractFactory("CubeStaking");
   const cubeStaking= await CubeStaking.deploy(wcube,rewardToken,rewardPerBlock,startBlock,endBlock,admin);
@@ -38,10 +49,18 @@ async function main() {
   //const rewardTokenCntr = await RewardToken.attach(rewardToken);
   //const balance = await rewardTokenCntr.balanceOf(old_cubeStaking_addr); 
   const balance = '2494222796390474859937792'
-  const withdraw_tx = await old_cubeStaking.emergencyRewardWithdraw(balance);
+  const withdraw_tx = await old_cubeStaking.emergencyTokenWithdraw(rewardToken,balance);
   await withdraw_tx.wait();
   console.log("cubeStaking.emergencyRewardWithdraw",balance);
   */
+
+
+  const setOwner = await cubeStaking.transferOwnership(signer_addr);
+  await setOwner.wait();
+  const owner = await cubeStaking.owner();
+  console.log("set CubeStaking Owner",owner);
+
+
 
 
 }
