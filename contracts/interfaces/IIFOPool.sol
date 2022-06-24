@@ -47,6 +47,8 @@ interface IIFOPool {
 
 	function rebalance() external;
 
+	function unlockTime() external view returns(uint256 unlock_time);
+
 	// for initiator
 	function unlockLiquidity() external;
 	function treasurePending() external view returns(uint256 sellTokenAmount, uint256 raiseTokenAmount);

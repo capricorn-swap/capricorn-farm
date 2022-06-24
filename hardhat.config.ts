@@ -44,6 +44,7 @@ const config: HardhatUserConfig = {
     },
     "cube-testnet": {
       url: "https://http-testnet-jp.cube.network",
+      //url: "https://http-testnet-sg.cube.network",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 5000000000,

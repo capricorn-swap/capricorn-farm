@@ -48,31 +48,24 @@ async function main() {
 '0x590ce943461f78dd48d56d477722e4ebba4fc1a9',
 '0xaa3f85011a02a60ca56405b5f0fabc068f54e2f7',
 '0x872d1e3049798908548a3a2a66163fe19c1d9b46',
+'0xCc1FeC6Ec19d53470e26171B01bE4e61b5c9f16E',
+'0xf58DBD95c957cC381a76B9Aae401779a5B24e06a',
 
   ]
-  const blackList = ['0xC91832d1E4D9fd3a2AC6EFB5884c611f584cFE73']
+
+  //const add_tx = await cubeStaking.batchSetWhiteList(whiteList);
+  //await add_tx.wait();
 
   for( var i in whiteList){
     console.log(i);
     const addr = whiteList[i];
-    const tx = await cubeStaking.setWhiteList(addr);
-    await tx.wait();
+    //const tx = await cubeStaking.setWhiteList(addr);
+    //await tx.wait();
     const userInfo1 = await cubeStaking.userInfo(addr);
+    console.log(userInfo1);
     const isInWhiteList = userInfo1['inWhiteList']
     console.log(addr," is in white list",isInWhiteList)
   }
-
-/*
-  for( var i in blackList){
-    console.log(i);
-    const addr = blackList[i];
-    const tx = await cubeStaking.setBlackList(addr);
-    await tx.wait();
-    const userInfo1 = await cubeStaking.userInfo(addr);
-    const isInBlackList = userInfo1['inBlackList']
-    console.log(addr," is in black list",isInBlackList)
-  }
-  */
 
 
 }
