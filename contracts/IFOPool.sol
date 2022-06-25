@@ -318,7 +318,7 @@ contract IFOPool is IIFOPool{
 			lpTokenAmountB = sellAmount;
 			
 			treasureMoney = raiseTotal > topLimit ? topLimit.sub(raiseAmount) : raiseTotal.sub(raiseAmount);
-			treasureToken = raiseTotal > topLimit ? sellAmount.mul(excessRate).div(100) : sellAmount.mul(topLimit.sub(raiseTotal)).div(raiseAmount);
+			treasureToken = raiseTotal > topLimit ? 0 : sellAmount.mul(topLimit.sub(raiseTotal)).div(raiseAmount);
 		}
 		settled = true;
 
@@ -376,7 +376,8 @@ contract IFOPool is IIFOPool{
 
 	function rebalance() override external{
 		require(settled,'not settled');
-		require(lpadded && block.timestamp > unlockTime(),'unlock later');
+		require(lpadded,'not lpadded');
+		require(block.timestamp < unlockTime(),'time end');
 		address swapFactory = IIFOFactory(factory).swapFactory();
 		address lpPair = CapswapV2Library.pairFor(swapFactory,sellToken, raiseToken);
 		(uint reserveSell,uint reserveRaise) = CapswapV2Library.getReserves(swapFactory,sellToken,raiseToken);
