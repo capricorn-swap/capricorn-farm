@@ -330,10 +330,11 @@ contract IFOPool is IIFOPool{
 		// make lpPair
 		address swapRouter = IIFOFactory(factory).swapRouter();
 
-		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
-		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
+		IERC20(raiseToken).approve(swapRouter,lpTokenAmountA);
+		IERC20(sellToken).approve(swapRouter,lpTokenAmountB);
 
-		bytes4 SELECTOR = bytes4(keccak256(bytes('addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)')));
+		//bytes4 SELECTOR = bytes4(keccak256(bytes('addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)')));
+		bytes4 SELECTOR = ICapswapV2Router02(swapRouter).addLiquidity.selector;
 
 		(bool success, bytes memory data) = swapRouter.call(abi.encodeWithSelector(SELECTOR, raiseToken, sellToken,lpTokenAmountA,lpTokenAmountB,lpTokenAmountA.mul(97).div(100),lpTokenAmountB.mul(97).div(100),address(this),block.timestamp+60));
 
