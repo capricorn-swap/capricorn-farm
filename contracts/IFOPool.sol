@@ -14,6 +14,7 @@ import "./interfaces/IValidator.sol";
 import "./interfaces/IWCUBE.sol";
 
 import "./interfaces/ICapswapV2Router02.sol";
+import "./interfaces/ICapswapV2Factory.sol";
 import "./libraries/CapswapV2Library.sol";
 
 contract IFOPool is IIFOPool{
@@ -334,18 +335,19 @@ contract IFOPool is IIFOPool{
 		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
 		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
 
-		(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,raiseToken,sellToken);
+		address pair = ICapswapV2Factory(swapFactory).getPair(raiseToken,sellToken);
 
 		bool can_add_lp = false;
-		if(reserveA == 0 && reserveB == 0){
+		if(pair == address(0)){
 			can_add_lp = true;
 		}
-
-		if(reserveA != 0 && reserveB != 0){
+		else{
+			(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,raiseToken,sellToken);
 			uint expect_B = CapswapV2Library.quote(lpTokenAmountA,reserveA,reserveB);
 			if(expect_B > lpTokenAmountB.mul(97).div(100) && expect_B < lpTokenAmountB.mul(103).div(100)){
 				can_add_lp = true;
 			}
+
 		}
 
 		if(can_add_lp){
