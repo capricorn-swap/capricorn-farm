@@ -144,6 +144,14 @@ contract IFOFactory is IIFOFactory,Ownable{
 		//emit NewValidatorEvent(validator);
 	}
 
+	function setMinTime(uint256 min_time) external onlyOwner{
+    	MIN_TIME = min_time;
+    }
+
+    function setMaxTime(uint256 max_time) external onlyOwner{
+    	MAX_TIME = max_time;
+    }
+
 	function setFeeTo(address _feeTo) external onlyOwner{
 		feeTo = _feeTo;
 		//emit NewFeeToEvent(feeTo);

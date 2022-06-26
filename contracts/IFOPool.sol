@@ -332,8 +332,8 @@ contract IFOPool is IIFOPool{
 		address swapRouter = IIFOFactory(factory).swapRouter();
 		address swapFactory = IIFOFactory(factory).swapFactory();
 
-		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
-		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
+		IERC20(raiseToken).approve(swapRouter,lpTokenAmountA);
+		IERC20(sellToken).approve(swapRouter,lpTokenAmountB);
 
 		address pair = ICapswapV2Factory(swapFactory).getPair(raiseToken,sellToken);
 
@@ -356,8 +356,8 @@ contract IFOPool is IIFOPool{
 				sellToken,
 				lpTokenAmountA,
 				lpTokenAmountB,
-				lpTokenAmountA.mul(97).div(100),
-				lpTokenAmountB.mul(97).div(100),
+				lpTokenAmountA.mul(96).div(100),
+				lpTokenAmountB.mul(96).div(100),
 				address(this),
 				block.timestamp
 			);
