@@ -81,7 +81,7 @@ contract IFOPool is IIFOPool{
 	event Quit(address user,uint amount);
 	event Claim(address user,uint reward,uint refund);
 	//event Settled(uint raiseAmount,uint raiseTotal);
-	//event InitLP(uint amountA, uint amountB, uint liquidity);
+	event InitLP(uint amountA, uint amountB, uint liquidity);
 	//event RebalanceBuy(uint treasureAmount, uint boughtAmount);
 	//event RebalanceSell(uint sellAmount, uint treasureAmount);
 	//event UnlockLP(address user,uint lpAmount);
@@ -329,9 +329,51 @@ contract IFOPool is IIFOPool{
 	function initlp() internal{
 		// make lpPair
 		address swapRouter = IIFOFactory(factory).swapRouter();
+		address swapFactory = IIFOFactory(factory).swapFactory();
 
 		IERC20(sellToken).approve(swapRouter,lpTokenAmountA);
 		IERC20(raiseToken).approve(swapRouter,lpTokenAmountB);
+
+		(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,raiseToken,sellToken);
+
+		bool can_add_lp = false;
+		if(reserveA == 0 && reserveB == 0){
+			can_add_lp = true;
+		}
+
+		if(reserveA != 0 && reserveB != 0){
+			uint expect_B = CapswapV2Library.quote(lpTokenAmountA,reserveA,reserveB);
+			if(expect_B > lpTokenAmountB.mul(97).div(100) && expect_B < lpTokenAmountB.mul(103).div(100)){
+				can_add_lp = true;
+			}
+		}
+
+		if(can_add_lp){
+			(uint amountA, uint amountB,uint liquidity) = ICapswapV2Router02(swapRouter).addLiquidity(
+				raiseToken, 
+				sellToken,
+				lpTokenAmountA,
+				lpTokenAmountB,
+				lpTokenAmountA.mul(97).div(100),
+				lpTokenAmountB.mul(97).div(100),
+				address(this),
+				block.timestamp
+			);
+
+			lpadded = true;
+			lpInitTime = block.timestamp;
+
+			treasureMoney = treasureMoney.add(lpTokenAmountA.sub(amountA));
+			treasureToken = treasureToken.add(lpTokenAmountB.sub(amountB));
+			refundGas();
+
+			emit InitLP(amountA,amountB,liquidity);
+		}
+		else{
+			emit InitLP(0,0,0);
+		}
+
+		/*
 
 		bytes4 SELECTOR = bytes4(keccak256(bytes('addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)')));
 
@@ -340,12 +382,13 @@ contract IFOPool is IIFOPool{
 		if(success){
 			lpadded = true;
 			lpInitTime = block.timestamp;
-			(uint amountA, uint amountB, /*uint liquidity*/) 
+			(uint amountA, uint amountB, uint liquidity) 
 				= abi.decode(data, (uint,uint,uint));
 			treasureMoney = treasureMoney.add(lpTokenAmountA.sub(amountA));
 			treasureToken = treasureToken.add(lpTokenAmountB.sub(amountB));
 			refundGas();
 		}
+		*/
 
 		//emit InitLP(amountA,amountB,liquidity);
 	}
