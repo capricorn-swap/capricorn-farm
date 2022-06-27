@@ -33,6 +33,10 @@ contract Validator is IValidator{
 	function vote(address user) override public view returns (uint user_value){
 		(uint user_amount,) =MasterChef(masterChef).userInfo(0,user);
 
+        if(user_amount == 0){ 
+            return 0;
+        }
+
 		address corn = address(MasterChef(masterChef).corn());
 
 		(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,corn,valueToken);
