@@ -38,6 +38,11 @@ async function main() {
   console.log("deploy ifoFactory",ifoFactory.address);
 
   // setFeeTo
+  const setMinTime = await ifoFactory.setMinTime(0);
+  await setMinTime.wait();
+  console.log("setMinTime",await ifoFactory.MIN_TIME());
+
+  // setFeeTo
   const setFeeTo = await ifoFactory.setFeeTo(deployer.address);
   await setFeeTo.wait();
   console.log("setFeeTo",await ifoFactory.feeTo());
