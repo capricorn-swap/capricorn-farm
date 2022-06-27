@@ -18,9 +18,23 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+/* cube-testnet
   const masterchef = '0x6273638e3Be5770851E23bfcE27d69592BEDCd2c';
   const swapFactor = '0x7a1eba426aa389aac9b410cdfe3cef5d344e043f';
   const USDT = '0x9bd522cc85bd1bd6d069d5e273e46ccfee905493';
+
+  const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
+  const swapRouter = '0x14c02dc9b29ac28e852f740cba6722bc7308feb8';
+//*/
+
+//* cube-mainnet
+  const masterchef = '0x441e22e8cC8c3cfa14086a78ED130e1841307860';
+  const swapFactor = '0x33CB4150f3ADFCD92fbFA3309823A2a242bF280f';
+  const USDT = '0x79F1520268A20c879EF44d169A4E3812D223C6de';
+
+  const wcube = '0x9d3f61338d6eb394e378d28c1fd17d5909ac6591';
+  const swapRouter = '0x34c385dd9015d663830a37CD2E75818fda6C605f';
+//*/
 
   const Validator= await ethers.getContractFactory("Validator");
   const validator = await Validator.deploy(masterchef, swapFactor,USDT);
@@ -28,16 +42,13 @@ async function main() {
   const validator_addr = validator.address;
   console.log("deploy validator",validator.address);
 
-  const wcube = '0xB9164670A2F388D835B868b3D0D441fa1bE5bb00';
-  const swapRouter = '0x14c02dc9b29ac28e852f740cba6722bc7308feb8';
-
   const IFOFactory = await ethers.getContractFactory("IFOFactory");
   const ifoFactory = await IFOFactory.deploy(wcube,swapRouter,validator_addr);
   await ifoFactory.deployed();
   const ifoFactory_addr = ifoFactory.address;
   console.log("deploy ifoFactory",ifoFactory.address);
 
-  // setFeeTo
+  // setMinTime
   const setMinTime = await ifoFactory.setMinTime(0);
   await setMinTime.wait();
   console.log("setMinTime",await ifoFactory.MIN_TIME());
@@ -56,20 +67,6 @@ async function main() {
   const setOpenfeeAmount = await ifoFactory.setOpenfeeAmount("20000000000000000000");
   await setOpenfeeAmount.wait();
   console.log("setOpenfeeAmount",await ifoFactory.openfeeAmount());
-
-  /*
-
-  const old_cubeStaking_addr = '0x47175993a73dC692Cd8C26E2f69235377BD0B01d'
-  const old_cubeStaking = await CubeStaking.attach(old_cubeStaking_addr);
-
-  //const RewardToken = await ethers.getContractFactory("IERC20");
-  //const rewardTokenCntr = await RewardToken.attach(rewardToken);
-  //const balance = await rewardTokenCntr.balanceOf(old_cubeStaking_addr); 
-  const balance = '2494222796390474859937792'
-  const withdraw_tx = await old_cubeStaking.emergencyRewardWithdraw(balance);
-  await withdraw_tx.wait();
-  console.log("cubeStaking.emergencyRewardWithdraw",balance);
-  */
 
 
 }

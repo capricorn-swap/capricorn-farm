@@ -375,6 +375,7 @@ contract IFOPool is IIFOPool{
 			emit InitLP(0,0,0);
 		}
 
+/*
 		//bytes4 SELECTOR = bytes4(keccak256(bytes('addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)')));
 		bytes4 SELECTOR = ICapswapV2Router02(swapRouter).addLiquidity.selector;
 
@@ -422,6 +423,8 @@ contract IFOPool is IIFOPool{
 		require(settled,'not settled');
 		require(lpadded,'not lpadded');
 		require(block.timestamp < unlockTime(),'time end');
+        UserInfo storage user = userInfo[msg.sender];
+        require(user.participated,'not participated');
 		address swapFactory = IIFOFactory(factory).swapFactory();
 		address lpPair = CapswapV2Library.pairFor(swapFactory,sellToken, raiseToken);
 		(uint reserveSell,uint reserveRaise) = CapswapV2Library.getReserves(swapFactory,sellToken,raiseToken);
