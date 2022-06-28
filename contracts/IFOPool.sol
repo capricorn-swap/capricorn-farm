@@ -275,8 +275,8 @@ contract IFOPool is IIFOPool{
 		require(block.timestamp > endTimestamp,'can not claim');
 
 		UserInfo storage user = userInfo[msg.sender];
-		require(!user.claimed,'claimed');
-		user.claimed = true;
+		//require(!user.claimed,'claimed');
+		
 
 		if(!settled){
 			settle();
@@ -286,7 +286,9 @@ contract IFOPool is IIFOPool{
 		}
 
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
-
+		user.claimed = true;
+		user.amount = 0;
+		
 		if(reward > 0){
 			IERC20(sellToken).safeTransfer(msg.sender, reward);
 		}
