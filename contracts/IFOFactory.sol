@@ -152,6 +152,10 @@ contract IFOFactory is IIFOFactory,Ownable{
     	MAX_TIME = max_time;
     }
 
+    function setMinPeriod(uint256 min_period) external onlyOwner{
+    	MIN_PERIOD = min_period;
+    }
+
 	function setFeeTo(address _feeTo) external onlyOwner{
 		feeTo = _feeTo;
 		//emit NewFeeToEvent(feeTo);
