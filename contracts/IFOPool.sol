@@ -304,7 +304,9 @@ contract IFOPool is IIFOPool{
 		emit Claim(msg.sender,reward,refund);
 	}
 
-	function settle() internal{
+	function settle() public{
+		require(block.timestamp > endTimestamp,'can not settled');
+		require(!settled,'settled');
 		uint excessRate = IIFOFactory(factory).excessRate();
 		uint topLimit = raiseAmount.mul(100+excessRate).div(100);
 
