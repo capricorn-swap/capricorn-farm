@@ -6,8 +6,9 @@ pragma experimental ABIEncoderV2;
 import "./interfaces/IValidator.sol";
 import "./libraries/CapswapV2Library.sol";
 import "./MasterChef.sol";
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract Validator is IValidator{
+contract Validator is IValidator,Ownable{
 
 	address public masterChef;
 	address public swapFactory;
@@ -41,6 +42,10 @@ contract Validator is IValidator{
 
 		(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,corn,valueToken);
 		user_value = CapswapV2Library.quote(user_amount,reserveA,reserveB);
+	}
+
+	function setThreshold(uint _threshold) public onlyOwner{
+		threshold = _threshold;
 	}
 
 }
