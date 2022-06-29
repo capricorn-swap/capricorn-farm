@@ -288,7 +288,7 @@ contract IFOPool is IIFOPool{
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
 		user.claimed = true;
 		user.amount = 0;
-		
+
 		if(reward > 0){
 			IERC20(sellToken).safeTransfer(msg.sender, reward);
 		}
@@ -333,6 +333,7 @@ contract IFOPool is IIFOPool{
 		// make lpPair
 		address swapRouter = IIFOFactory(factory).swapRouter();
 		address swapFactory = IIFOFactory(factory).swapFactory();
+		uint256 slippage = IIFOFactory(factory).slippage();
 
 		IERC20(raiseToken).approve(swapRouter,lpTokenAmountA);
 		IERC20(sellToken).approve(swapRouter,lpTokenAmountB);
@@ -346,7 +347,7 @@ contract IFOPool is IIFOPool{
 		else{
 			(uint reserveA, uint reserveB) = CapswapV2Library.getReserves(swapFactory,raiseToken,sellToken);
 			uint expect_B = CapswapV2Library.quote(lpTokenAmountA,reserveA,reserveB);
-			if(expect_B > lpTokenAmountB.mul(97).div(100) && expect_B < lpTokenAmountB.mul(103).div(100)){
+			if(expect_B > lpTokenAmountB.mul(100-slippage).div(100) && expect_B < lpTokenAmountB.mul(100+slippage).div(100)){
 				can_add_lp = true;
 			}
 
@@ -358,8 +359,8 @@ contract IFOPool is IIFOPool{
 				sellToken,
 				lpTokenAmountA,
 				lpTokenAmountB,
-				lpTokenAmountA.mul(96).div(100),
-				lpTokenAmountB.mul(96).div(100),
+				0,
+				0,
 				address(this),
 				block.timestamp
 			);

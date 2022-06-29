@@ -31,6 +31,7 @@ interface IIFOFactory {
 
 	function swapRouter() external view returns (address);
 	function swapFactory() external view returns (address);
+	function slippage() external view returns (uint256);
 
 	function feeTo() external view returns (address);
 

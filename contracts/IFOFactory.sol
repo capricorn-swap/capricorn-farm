@@ -36,6 +36,7 @@ contract IFOFactory is IIFOFactory,Ownable{
 	mapping(address => EnumerableSet.UintSet) seeds;
 	mapping(address => EnumerableSet.UintSet) crops;
 	EnumerableSet.UintSet verified;
+	uint256 public override slippage=3;
 
 	event CreatePoolEvent(address sellToken,
 		uint sellAmount,
@@ -137,6 +138,11 @@ contract IFOFactory is IIFOFactory,Ownable{
 
     function poolsLength() override external  view returns(uint256){
     	return pools.length;
+    }
+
+    function setSlippage(uint256 _slippage) external onlyOwner{
+    	require(_slippage < 100,'too large slippage');
+    	slippage = _slippage;
     }
 
     function setValidator(address _validator) external onlyOwner{
