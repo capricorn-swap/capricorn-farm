@@ -286,13 +286,11 @@ contract IFOPool is IIFOPool{
 		}
 
 		(uint reward,uint refund) = consult(user.amount,raiseTotal);
-		user.claimed = true;
-		user.amount = 0;
-
-		if(reward > 0){
+		
+		if(!user.claimed && reward > 0){
 			IERC20(sellToken).safeTransfer(msg.sender, reward);
 		}
-		if(refund > 0){
+		if(!user.claimed && refund > 0){
 			if(raiseToken == WCUBE){
 				IWCUBE(WCUBE).withdraw(refund);
 	        	safeTransferCUBE(address(msg.sender), refund);
@@ -301,6 +299,7 @@ contract IFOPool is IIFOPool{
 				IERC20(raiseToken).safeTransfer(msg.sender, refund);
 			}
 		}
+		user.claimed = true;
 
 		emit Claim(msg.sender,reward,refund);
 	}
