@@ -58,6 +58,8 @@ async function main() {
     const user02 = "0xCc1FeC6Ec19d53470e26171B01bE4e61b5c9f16E"
 
     const lensAdd = "0x05dFaA9A03A04f881e5161d38B74c3A95973dE14"
+
+
     const IFOLens = await ethers.getContractFactory("IFOLens");
 
     const lens = await IFOLens.attach(lensAdd);
@@ -91,7 +93,28 @@ async function main() {
 
     const verifiedPools = await lens.getVerifiedPools();
 
-    console.log("verifiedPools:",verifiedPools)
+    console.log("verifiedPools:",verifiedPools);
+
+    const IFOFactory = await ethers.getContractFactory("IFOFactory");
+
+    const fact1 = await IFOFactory.attach(factory1);
+
+    const ver1 = await fact1.verifiedPools()
+
+    console.log("fact1 verifiedPools :",ver1)
+
+    const fact = await IFOFactory.attach(factory);
+
+    const ver = await fact1.verifiedPools()
+
+    console.log("fact verifiedPools :",ver)
+
+    const fact2 = await IFOFactory.attach(factory2);
+
+    const ver2 = await fact1.verifiedPools()
+
+    console.log("fact2 verifiedPools :",ver2)
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

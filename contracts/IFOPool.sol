@@ -185,6 +185,8 @@ contract IFOPool is IIFOPool{
 	}
 
 	function depositCUBE() override external payable qualified{
+		require(raiseToken == WCUBE,'wrong raise token');
+		require(block.timestamp > startTimestamp, 'not start');
 		require(block.timestamp < endTimestamp,'time end');
 
 		UserInfo storage user = userInfo[msg.sender];
@@ -209,6 +211,7 @@ contract IFOPool is IIFOPool{
 	}
 
 	function deposit(uint256 amount) override external qualified{
+		require(block.timestamp > startTimestamp, 'not start');
 		require(block.timestamp < endTimestamp,'time end');
 
 		UserInfo storage user = userInfo[msg.sender];

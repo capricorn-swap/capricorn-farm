@@ -9,3 +9,8 @@ https://capricorn.finance. Feel free to read the code. More details coming soon.
 
 ### CUBETESTNET
 
+### LENS 
+
+1. set the onworking Factory
+2. add the new or old factory
+3. call the data
