@@ -224,6 +224,7 @@ contract IFOFactory is IIFOFactory,Ownable{
 
 	function verify(uint256 pid,bool _verified) override external onlyOwner{
 		address pool = pools[pid].pool_address;
+        pools[pid].verified = _verified;
 		IIFOPool(pool).verify(_verified);
 		if(_verified){
 			verified.add(pid);
